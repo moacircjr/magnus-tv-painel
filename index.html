@@ -1,0 +1,355 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex">
+<title>Magnus TV · Painel</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  :root{
+    --bg:#f6f4ef; --card:#fff; --ink:#16181c; --muted:#6b7078; --line:#e6e2d9;
+    --accent:#c98d1e; --accent-ink:#fff; --danger:#c2412d; --ok:#2f7d4f; --soft:#f1ede4;
+  }
+  @media (prefers-color-scheme:dark){
+    :root{ --bg:#0f1114; --card:#171a1f; --ink:#f1efe9; --muted:#9aa0a8; --line:#262a31;
+      --accent:#e8b04b; --accent-ink:#16181c; --soft:#1e2228; }
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:760px;margin:0 auto;padding:20px 16px 120px}
+  header{display:flex;align-items:center;justify-content:space-between;margin:8px 0 20px}
+  h1{font-size:22px;margin:0;letter-spacing:-.01em}
+  h1 b{color:var(--accent)}
+  .who{font-size:13px;color:var(--muted)}
+  .who button{margin-left:6px}
+  section{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px;margin-bottom:16px}
+  section h2{font-size:15px;margin:0 0 12px;letter-spacing:.02em;text-transform:uppercase;color:var(--muted);font-weight:600}
+  label{display:block;font-size:13px;color:var(--muted);margin:10px 0 4px}
+  input[type=text],input[type=email],input[type=number],input[type=url],textarea,select{
+    width:100%;padding:11px 12px;border:1px solid var(--line);border-radius:10px;background:var(--bg);color:var(--ink);font:inherit}
+  textarea{min-height:90px;resize:vertical}
+  button,.btn{appearance:none;border:1px solid var(--line);background:var(--soft);color:var(--ink);padding:10px 14px;border-radius:10px;font:inherit;font-weight:600;cursor:pointer}
+  button.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+  button.ghost{background:transparent}
+  button.small{padding:6px 10px;font-size:13px}
+  button:disabled{opacity:.5;cursor:default}
+  .row{display:flex;gap:8px;flex-wrap:wrap}
+  .row>*{flex:1}
+  .adds{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+  @media(max-width:560px){.adds{grid-template-columns:repeat(2,1fr)}}
+  .item{display:flex;gap:12px;align-items:flex-start;border:1px solid var(--line);border-radius:12px;padding:12px;margin-bottom:10px;background:var(--bg)}
+  .item.off{opacity:.5}
+  .thumb{width:72px;height:72px;border-radius:8px;background:var(--soft);flex:none;overflow:hidden;display:flex;align-items:center;justify-content:center;font-size:26px}
+  .thumb video,.thumb img{width:100%;height:100%;object-fit:cover}
+  .body{flex:1;min-width:0}
+  .body .t{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .body .s{font-size:13px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .body .ctl{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+  .tag{display:inline-block;font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--accent);margin-bottom:2px}
+  .empty{color:var(--muted);text-align:center;padding:20px}
+  .savebar{position:fixed;left:0;right:0;bottom:0;padding:12px 16px calc(12px + env(safe-area-inset-bottom));background:var(--card);border-top:1px solid var(--line);display:flex;justify-content:center}
+  .savebar .in{max-width:760px;width:100%;display:flex;align-items:center;gap:12px}
+  .savebar .msg{flex:1;font-size:14px;color:var(--muted)}
+  .savebar button{min-width:150px}
+  dialog{border:1px solid var(--line);border-radius:16px;background:var(--card);color:var(--ink);width:min(520px,calc(100% - 32px));padding:20px}
+  dialog::backdrop{background:rgba(0,0,0,.45)}
+  dialog h3{margin:0 0 6px}
+  dialog .actions{display:flex;gap:8px;justify-content:flex-end;margin-top:16px}
+  .progress{height:6px;border-radius:3px;background:var(--soft);overflow:hidden;margin-top:10px;display:none}
+  .progress div{height:100%;width:0;background:var(--accent);transition:width .2s}
+  .login{max-width:400px;margin:12vh auto 0;text-align:center}
+  .login p{color:var(--muted)}
+  .hint{font-size:13px;color:var(--muted);margin-top:6px}
+  .switch{display:flex;align-items:center;gap:10px;margin-top:12px}
+  .hidden{display:none!important}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- LOGIN -->
+  <div id="vLogin" class="login hidden">
+    <h1>Magnus <b>TV</b></h1>
+    <p>Entre com seu e-mail. Você vai receber um link de acesso, sem senha.</p>
+    <input type="email" id="email" placeholder="seu@email.com" autocomplete="email">
+    <div style="margin-top:10px"><button class="primary" id="btnLogin" style="width:100%">Enviar link de acesso</button></div>
+    <p id="loginMsg" class="hint"></p>
+  </div>
+
+  <!-- PAINEL -->
+  <div id="vApp" class="hidden">
+    <header>
+      <h1>Magnus <b>TV</b></h1>
+      <div class="who"><span id="whoEmail"></span><button class="small ghost" id="btnSair">Sair</button></div>
+    </header>
+
+    <section>
+      <h2>O que passa na TV</h2>
+      <div id="lista"></div>
+      <div class="adds">
+        <button id="addVideo">＋ Vídeo</button>
+        <button id="addInsta">＋ Instagram</button>
+        <button id="addRecado">＋ Recado</button>
+        <button id="addImagem">＋ Imagem</button>
+      </div>
+    </section>
+
+    <section>
+      <h2>Barra de baixo</h2>
+      <div class="switch"><input type="checkbox" id="mostrarBarra"><label for="mostrarBarra" style="margin:0;color:var(--ink)">Mostrar barra com relógio, clima e recados</label></div>
+      <label for="recados">Recados que correm na barra (um por linha)</label>
+      <textarea id="recados" placeholder="Bem-vindo à Magnus&#10;Siga @magnus no Instagram"></textarea>
+      <label for="cidade">Cidade do clima</label>
+      <div class="row"><input type="text" id="cidade" placeholder="Ex.: São Ludgero"><button id="btnCidade" style="flex:none">Buscar</button></div>
+      <p class="hint" id="cidadeMsg"></p>
+    </section>
+
+    <section>
+      <h2>Marca</h2>
+      <label for="marca">Nome exibido</label>
+      <input type="text" id="marca" placeholder="MAGNUS">
+      <label>Logo (PNG com fundo transparente, opcional)</label>
+      <div class="row">
+        <button id="btnLogo">Enviar logo</button>
+        <button id="btnLogoTirar" class="ghost">Remover logo</button>
+      </div>
+      <p class="hint" id="logoMsg"></p>
+    </section>
+  </div>
+</div>
+
+<div class="savebar hidden" id="savebar">
+  <div class="in"><div class="msg" id="saveMsg">Tudo salvo</div><button class="primary" id="btnSalvar" disabled>Salvar na TV</button></div>
+</div>
+
+<!-- Diálogo genérico -->
+<dialog id="dlg">
+  <form method="dialog" id="dlgForm">
+    <h3 id="dlgTitle"></h3>
+    <div id="dlgBody"></div>
+    <div class="progress" id="prog"><div></div></div>
+    <div class="actions"><button value="cancel" class="ghost" id="dlgCancel">Cancelar</button><button value="ok" class="primary" id="dlgOk">Adicionar</button></div>
+  </form>
+</dialog>
+<input type="file" id="file" class="hidden">
+
+<script>
+const SUPABASE_URL = "https://ocqgortpqhkgxlxvphkx.supabase.co";
+const SUPABASE_KEY = "sb_publishable_q6xrUBBo9rZeoiBmKnHhPQ_RHECq_6z";
+const TELA = "principal";
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+const $ = id => document.getElementById(id);
+let cfg = null, dirty = false;
+
+// ---------------- Login ----------------
+async function boot(){
+  const { data:{ session } } = await sb.auth.getSession();
+  if(session) start(session); else showLogin();
+  sb.auth.onAuthStateChange((_e, s) => { if(s && !cfg) start(s); });
+}
+function showLogin(){ $("vLogin").classList.remove("hidden"); $("vApp").classList.add("hidden"); $("savebar").classList.add("hidden"); }
+$("btnLogin").onclick = async () => {
+  const email = $("email").value.trim();
+  if(!email) return;
+  $("btnLogin").disabled = true;
+  const { error } = await sb.auth.signInWithOtp({ email, options:{ emailRedirectTo: location.origin + location.pathname } });
+  $("btnLogin").disabled = false;
+  $("loginMsg").textContent = error ? ("Erro: " + error.message) : "Pronto! Abra seu e-mail e toque no link para entrar.";
+};
+$("btnSair").onclick = async () => { await sb.auth.signOut(); location.reload(); };
+
+async function start(session){
+  $("vLogin").classList.add("hidden"); $("vApp").classList.remove("hidden"); $("savebar").classList.remove("hidden");
+  $("whoEmail").textContent = session.user.email;
+  const { data, error } = await sb.from("telas").select("config").eq("id", TELA).maybeSingle();
+  if(error){ $("saveMsg").textContent = "Erro ao carregar: " + error.message; return; }
+  cfg = (data && data.config) || { marca:"MAGNUS", itens:[], recados:[], mostrarBarra:true };
+  cfg.itens = cfg.itens || []; cfg.recados = cfg.recados || [];
+  fillForm(); render();
+}
+
+// ---------------- Formulário ----------------
+function fillForm(){
+  $("marca").value = cfg.marca || "";
+  $("recados").value = (cfg.recados || []).join("\n");
+  $("mostrarBarra").checked = cfg.mostrarBarra !== false;
+  $("cidade").value = (cfg.clima && cfg.clima.cidade) || "";
+  $("logoMsg").textContent = cfg.logo ? "Logo enviada." : "Sem logo: mostra o nome.";
+}
+$("marca").oninput = e => { cfg.marca = e.target.value; touch(); };
+$("recados").oninput = e => { cfg.recados = e.target.value.split("\n").map(s=>s.trim()).filter(Boolean); touch(); };
+$("mostrarBarra").onchange = e => { cfg.mostrarBarra = e.target.checked; touch(); };
+
+$("btnCidade").onclick = async () => {
+  const q = $("cidade").value.trim(); if(!q) { cfg.clima = null; touch(); return; }
+  $("cidadeMsg").textContent = "Buscando…";
+  try{
+    const r = await fetch("https://geocoding-api.open-meteo.com/v1/search?count=1&language=pt&name=" + encodeURIComponent(q)).then(r=>r.json());
+    const g = r.results && r.results[0];
+    if(!g){ $("cidadeMsg").textContent = "Cidade não encontrada."; return; }
+    cfg.clima = { cidade: g.name, lat: +g.latitude.toFixed(3), lon: +g.longitude.toFixed(3) };
+    $("cidade").value = g.name;
+    $("cidadeMsg").textContent = "Encontrada: " + g.name + (g.admin1 ? " – " + g.admin1 : "") + ". Lembre de salvar.";
+    touch();
+  }catch(e){ $("cidadeMsg").textContent = "Não consegui buscar agora."; }
+};
+
+$("btnLogo").onclick = () => pickFile("image/*", async f => {
+  $("logoMsg").textContent = "Enviando…";
+  try{ cfg.logo = await upload(f); $("logoMsg").textContent = "Logo enviada. Lembre de salvar."; touch(); }
+  catch(e){ $("logoMsg").textContent = "Erro: " + e.message; }
+});
+$("btnLogoTirar").onclick = () => { cfg.logo = ""; fillForm(); touch(); };
+
+// ---------------- Lista ----------------
+const ICON = { video:"🎬", instagram:"📷", recado:"💬", imagem:"🖼️" };
+const NOME = { video:"Vídeo", instagram:"Instagram", recado:"Recado", imagem:"Imagem" };
+
+function render(){
+  const L = $("lista"); L.innerHTML = "";
+  if(!cfg.itens.length){ L.innerHTML = '<div class="empty">Nada na TV ainda. Adicione algo abaixo.</div>'; return; }
+  cfg.itens.forEach((it, i) => {
+    const d = document.createElement("div");
+    d.className = "item" + (it.ativo === false ? " off" : "");
+    const th = document.createElement("div"); th.className = "thumb";
+    if(it.tipo === "video" && it.url){ const v = document.createElement("video"); v.src = it.url + "#t=1"; v.muted = true; v.preload = "metadata"; th.appendChild(v); }
+    else if(it.tipo === "imagem" && it.url){ const im = document.createElement("img"); im.src = it.url; th.appendChild(im); }
+    else th.textContent = ICON[it.tipo] || "•";
+    const b = document.createElement("div"); b.className = "body";
+    const tag = document.createElement("div"); tag.className = "tag"; tag.textContent = NOME[it.tipo] || it.tipo;
+    const t = document.createElement("div"); t.className = "t";
+    const s = document.createElement("div"); s.className = "s";
+    if(it.tipo === "instagram"){ t.textContent = it.cliente || "Post de cliente"; s.textContent = it.url; }
+    else if(it.tipo === "recado"){ t.textContent = it.titulo || "(sem título)"; s.textContent = it.texto || ""; }
+    else { t.textContent = it.nome || it.url.split("/").pop(); s.textContent = it.tipo === "video" ? (it.duracao ? "Corta em " + it.duracao + "s" : "Toca até o fim") + (it.som ? " · com som" : " · sem som") : (it.duracao || 12) + "s na tela"; }
+    if(it.tipo !== "video" && it.tipo !== "imagem") s.textContent += (s.textContent ? " · " : "") + (it.duracao || (it.tipo==="instagram"?15:12)) + "s";
+    const ctl = document.createElement("div"); ctl.className = "ctl";
+    ctl.append(
+      btn("↑", () => move(i, -1), i === 0),
+      btn("↓", () => move(i, 1), i === cfg.itens.length - 1),
+      btn(it.ativo === false ? "Ligar" : "Pausar", () => { it.ativo = it.ativo === false; touch(); render(); }),
+      btn("Editar", () => edit(i)),
+      btn("Apagar", () => { if(confirmDel(it)){ cfg.itens.splice(i, 1); touch(); render(); } })
+    );
+    b.append(tag, t, s, ctl);
+    d.append(th, b); L.appendChild(d);
+  });
+}
+function btn(txt, fn, dis){ const x = document.createElement("button"); x.className = "small"; x.type = "button"; x.textContent = txt; x.onclick = fn; x.disabled = !!dis; return x; }
+function move(i, dir){ const a = cfg.itens; [a[i], a[i+dir]] = [a[i+dir], a[i]]; touch(); render(); }
+function confirmDel(it){ return window.confirm("Tirar este item da TV?"); }
+
+// ---------------- Diálogos de adicionar/editar ----------------
+function field(id, label, type, value, extra){
+  return `<label for="${id}">${label}</label>` + (type === "textarea"
+    ? `<textarea id="${id}">${esc(value)}</textarea>`
+    : `<input type="${type}" id="${id}" value="${esc(value)}" ${extra||""}>`);
+}
+function esc(s){ return String(s == null ? "" : s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c])); }
+
+function openDialog(title, html, okText, onOk){
+  $("dlgTitle").textContent = title; $("dlgBody").innerHTML = html; $("dlgOk").textContent = okText;
+  $("prog").style.display = "none"; $("dlgOk").disabled = false;
+  const d = $("dlg");
+  $("dlgForm").onsubmit = async ev => {
+    if(ev.submitter && ev.submitter.value === "cancel") return;
+    ev.preventDefault();
+    $("dlgOk").disabled = true;
+    try{ const ok = await onOk(); if(ok !== false){ d.close(); render(); touch(); } }
+    catch(e){ alertIn("Erro: " + e.message); }
+    $("dlgOk").disabled = false;
+  };
+  d.showModal();
+}
+function alertIn(t){ let p = $("dlgBody").querySelector(".hint.err"); if(!p){ p = document.createElement("p"); p.className="hint err"; p.style.color="var(--danger)"; $("dlgBody").appendChild(p);} p.textContent = t; }
+
+$("addVideo").onclick = () => openDialog("Novo vídeo",
+  `<label>Arquivo de vídeo (MP4, até 50 MB)</label><input type="file" id="fVid" accept="video/mp4,video/*">
+   <p class="hint">Ou cole um link direto de um .mp4:</p>
+   ${field("fUrl","Link do vídeo (opcional)","url","")}
+   ${field("fDur","Cortar depois de quantos segundos? (0 = toca até o fim)","number",0,'min="0"')}
+   <div class="switch"><input type="checkbox" id="fSom"><label for="fSom" style="margin:0;color:var(--ink)">Tocar com som</label></div>`,
+  "Adicionar", async () => {
+    const f = $("fVid").files[0]; let url = $("fUrl").value.trim(), nome = "";
+    if(f){ if(f.size > 50*1024*1024){ alertIn("Vídeo maior que 50 MB. Comprima antes (ex.: HandBrake ou CapCut)."); return false; } url = await upload(f, true); nome = f.name; }
+    if(!url){ alertIn("Escolha um arquivo ou cole um link."); return false; }
+    cfg.itens.push({ tipo:"video", url, nome, duracao:+$("fDur").value || 0, som:$("fSom").checked });
+  });
+
+$("addImagem").onclick = () => openDialog("Nova imagem",
+  `<label>Imagem (JPG/PNG, ideal 1920×1080)</label><input type="file" id="fImg" accept="image/*">
+   ${field("fDur","Segundos na tela","number",12,'min="3"')}`,
+  "Adicionar", async () => {
+    const f = $("fImg").files[0]; if(!f){ alertIn("Escolha uma imagem."); return false; }
+    const url = await upload(f, true);
+    cfg.itens.push({ tipo:"imagem", url, nome:f.name, duracao:+$("fDur").value || 12 });
+  });
+
+$("addInsta").onclick = () => openDialog("Post de cliente do Instagram",
+  `${field("fUrl","Link do post ou reel","url","",'placeholder="https://www.instagram.com/p/…"')}
+   <p class="hint">No Instagram: ••• no post → Copiar link. O post precisa ser de um perfil público.</p>
+   ${field("fCli","Nome do cliente","text","")}
+   ${field("fLeg","Texto pequeno embaixo (opcional)","text","",'placeholder="@perfildocliente"')}
+   ${field("fDur","Segundos na tela","number",15,'min="5"')}`,
+  "Adicionar", async () => {
+    const url = $("fUrl").value.trim();
+    if(!/instagram\.com\/(p|reel|tv)\//.test(url)){ alertIn("Cole o link de um post ou reel (instagram.com/p/… ou /reel/…)."); return false; }
+    cfg.itens.push({ tipo:"instagram", url, cliente:$("fCli").value.trim(), legenda:$("fLeg").value.trim(), duracao:+$("fDur").value || 15 });
+  });
+
+$("addRecado").onclick = () => openDialog("Recado em tela cheia",
+  `${field("fCha","Chamada pequena (opcional)","text","",'placeholder="Promoção da semana"')}
+   ${field("fTit","Título","text","")}
+   ${field("fTxt","Texto (opcional)","textarea","")}
+   ${field("fDur","Segundos na tela","number",12,'min="3"')}`,
+  "Adicionar", async () => {
+    if(!$("fTit").value.trim()){ alertIn("Escreva um título."); return false; }
+    cfg.itens.push({ tipo:"recado", chamada:$("fCha").value.trim(), titulo:$("fTit").value.trim(), texto:$("fTxt").value.trim(), duracao:+$("fDur").value || 12 });
+  });
+
+function edit(i){
+  const it = cfg.itens[i];
+  if(it.tipo === "recado") openDialog("Editar recado",
+    field("fCha","Chamada pequena","text",it.chamada) + field("fTit","Título","text",it.titulo) + field("fTxt","Texto","textarea",it.texto) + field("fDur","Segundos na tela","number",it.duracao||12),
+    "Salvar", async () => { Object.assign(it, { chamada:$("fCha").value.trim(), titulo:$("fTit").value.trim(), texto:$("fTxt").value.trim(), duracao:+$("fDur").value||12 }); });
+  else if(it.tipo === "instagram") openDialog("Editar post",
+    field("fUrl","Link","url",it.url) + field("fCli","Nome do cliente","text",it.cliente) + field("fLeg","Texto pequeno","text",it.legenda) + field("fDur","Segundos na tela","number",it.duracao||15),
+    "Salvar", async () => { Object.assign(it, { url:$("fUrl").value.trim(), cliente:$("fCli").value.trim(), legenda:$("fLeg").value.trim(), duracao:+$("fDur").value||15 }); });
+  else if(it.tipo === "video") openDialog("Editar vídeo",
+    field("fDur","Cortar depois de quantos segundos? (0 = até o fim)","number",it.duracao||0) + `<div class="switch"><input type="checkbox" id="fSom" ${it.som?"checked":""}><label for="fSom" style="margin:0;color:var(--ink)">Tocar com som</label></div>`,
+    "Salvar", async () => { it.duracao = +$("fDur").value||0; it.som = $("fSom").checked; });
+  else openDialog("Editar imagem", field("fDur","Segundos na tela","number",it.duracao||12),
+    "Salvar", async () => { it.duracao = +$("fDur").value||12; });
+}
+
+// ---------------- Upload ----------------
+function pickFile(accept, cb){ const f = $("file"); f.accept = accept; f.value = ""; f.onchange = () => f.files[0] && cb(f.files[0]); f.click(); }
+async function upload(file, showProg){
+  const ext = (file.name.split(".").pop() || "bin").toLowerCase().replace(/[^a-z0-9]/g,"");
+  const path = Date.now() + "-" + Math.random().toString(36).slice(2,8) + "." + ext;
+  if(showProg){ $("prog").style.display = "block"; $("prog").firstElementChild.style.width = "35%"; }
+  const { error } = await sb.storage.from("midia").upload(path, file, { contentType: file.type || undefined, cacheControl: "31536000" });
+  if(showProg) $("prog").firstElementChild.style.width = "100%";
+  if(error) throw error;
+  return sb.storage.from("midia").getPublicUrl(path).data.publicUrl;
+}
+
+// ---------------- Salvar ----------------
+function touch(){ dirty = true; $("btnSalvar").disabled = false; $("saveMsg").textContent = "Alterações não salvas"; }
+$("btnSalvar").onclick = async () => {
+  $("btnSalvar").disabled = true; $("saveMsg").textContent = "Salvando…";
+  const { data, error } = await sb.from("telas").update({ config: cfg, atualizado: new Date().toISOString() }).eq("id", TELA).select("id");
+  if(error || !data || !data.length){
+    $("saveMsg").textContent = error ? "Erro: " + error.message : "Sem permissão para alterar (e-mail não autorizado).";
+    $("btnSalvar").disabled = false; return;
+  }
+  dirty = false; $("saveMsg").textContent = "Salvo! A TV atualiza em até 1 minuto.";
+};
+window.addEventListener("beforeunload", e => { if(dirty){ e.preventDefault(); e.returnValue = ""; } });
+
+boot();
+</script>
+</body>
+</html>
