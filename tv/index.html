@@ -99,6 +99,9 @@ body{background:var(--bg);color:var(--fg);font-family:var(--sans);overflow:hidde
 #show.on{opacity:1}
 #show .sl{position:absolute;inset:0;background:#0b0b0b center/contain no-repeat;opacity:0;transition:opacity .45s}
 #show .sl.on{opacity:1}
+#show video.sl{width:100%;height:100%;object-fit:contain;background:#000}
+#somHint{position:absolute;top:2.4vh;right:2vw;padding:.6vh 1.2vw;border-radius:999px;background:rgba(20,20,20,.7);color:#f1ede8;font:600 1.6vh var(--sans);display:none}
+#somHint.on{display:block}
 #showBar{position:absolute;left:50%;bottom:2.4vh;transform:translateX(-50%);display:flex;gap:14px;align-items:center;padding:.7vh 1.4vw;border-radius:999px;
   background:rgba(20,20,20,.6);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);color:#f1ede8;font:600 1.6vh var(--sans);opacity:0;transition:opacity .4s}
 #showBar.on{opacity:1}
@@ -169,7 +172,7 @@ body{background:var(--bg);color:var(--fg);font-family:var(--sans);overflow:hidde
     <div class="count" id="nwPos"></div>
   </section>
 </div>
-<div id="show"><div id="showBar"><i></i><span id="showTitle"></span><span id="showCount"></span></div></div>
+<div id="show"><div id="somHint">🔇 Aperte OK no controle para ativar o som</div><div id="showBar"><i></i><span id="showTitle"></span><span id="showCount"></span></div></div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
 <script>
@@ -274,7 +277,9 @@ $("igPrev").onclick=()=>passaPost(-1);$("igNext").onclick=()=>passaPost(1);
 $("nwPrev").onclick=()=>passaNot(-1);$("nwNext").onclick=()=>passaNot(1);
 // controle remoto / teclado: ← → troca cliente, ↑ ↓ troca notícia, F tela cheia
 document.addEventListener("keydown",e=>{
-  if(ctl.modo==="apresentacao"&&deck){if(e.key==="ArrowRight"||e.key==="ArrowDown"||e.key==="Enter")passaSlide(1);if(e.key==="ArrowLeft"||e.key==="ArrowUp")passaSlide(-1);return}
+  if(ctl.modo==="apresentacao"&&deck){const v=document.querySelector("#show video");if(v&&v.muted&&e.key==="Enter"){v.muted=false;$("somHint").className="";return}
+    if(e.key===" "&&v){v.paused?v.play():v.pause();return}
+    if(e.key==="ArrowRight"||e.key==="ArrowDown"||e.key==="Enter")passaSlide(1);if(e.key==="ArrowLeft"||e.key==="ArrowUp")passaSlide(-1);return}
   if(e.key==="ArrowRight")passaPost(1);if(e.key==="ArrowLeft")passaPost(-1);
   if(e.key==="ArrowDown")passaNot(1);if(e.key==="ArrowUp")passaNot(-1);
   if(e.key==="f"||e.key==="F")document.documentElement.requestFullscreen?.().catch(()=>{});
@@ -285,17 +290,28 @@ document.addEventListener("dblclick",()=>document.documentElement.requestFullscr
 /* ===== Modo apresentação ===== */
 const TELA="principal";
 let ctl={modo:"mural",apresentacao_id:null,slide:0},deck=null,barT=null;
-const pre=u=>(u||[]).forEach(x=>{const i=new Image();i.src=x});
+const isVid=it=>it&&typeof it==="object"&&it.v;
+const pre=u=>(u||[]).forEach(x=>{if(typeof x==="string"){const i=new Image();i.src=x}});
 function showSlide(){
   const box=$("show");
-  if(ctl.modo!=="apresentacao"||!deck?.slides?.length){box.className="";return}
-  const n=Math.max(0,Math.min(deck.slides.length-1,ctl.slide||0)),url=deck.slides[n];
+  if(ctl.modo!=="apresentacao"||!deck?.slides?.length){box.className="";box.querySelectorAll("video").forEach(v=>v.pause());$("somHint").className="";return}
+  const n=Math.max(0,Math.min(deck.slides.length-1,ctl.slide||0)),it=deck.slides[n],vid=isVid(it),url=vid?it.v:it;
   const cur=box.querySelector(".sl.on");
   if(!cur||cur.dataset.u!==url){
-    const d=document.createElement("div");d.className="sl";d.dataset.u=url;d.style.backgroundImage=`url("${url}")`;
-    box.insertBefore(d,$("showBar"));requestAnimationFrame(()=>requestAnimationFrame(()=>d.classList.add("on")));
-    const olds=[...box.querySelectorAll(".sl")].filter(x=>x!==d);setTimeout(()=>olds.forEach(x=>x.remove()),600);
+    let d;
+    if(vid){
+      d=document.createElement("video");d.src=url;if(it.p)d.poster=it.p;d.playsInline=true;d.preload="auto";d.className="sl";
+      d.onended=()=>{};                      // para no último quadro; o apresentador avança
+    }else{d=document.createElement("div");d.className="sl";d.style.backgroundImage=`url("${url}")`}
+    d.dataset.u=url;box.insertBefore(d,$("somHint"));requestAnimationFrame(()=>requestAnimationFrame(()=>d.classList.add("on")));
+    const olds=[...box.querySelectorAll(".sl")].filter(x=>x!==d);
+    olds.forEach(x=>{if(x.tagName==="VIDEO"){x.pause()}});setTimeout(()=>olds.forEach(x=>{if(x.tagName==="VIDEO"){x.removeAttribute("src");x.load()}x.remove()}),600);
   }
+  const v=[...box.querySelectorAll("video.sl")].find(x=>x.dataset.u===url);
+  if(vid&&v){
+    if(ctl.pausado){v.pause()}
+    else if(v.paused){v.muted=false;v.play().then(()=>$("somHint").className="").catch(()=>{v.muted=true;v.play().catch(()=>{});$("somHint").className="on"})}
+  }else $("somHint").className="";
   pre(deck.slides.slice(n+1,n+3));box.className="on";
   $("showTitle").textContent=deck.titulo||"";$("showCount").textContent=`${n+1} / ${deck.slides.length}`;
   $("showBar").className="on";clearTimeout(barT);barT=setTimeout(()=>$("showBar").className="",3500);
@@ -309,7 +325,7 @@ async function applyCtl(row){
   showSlide();
 }
 async function loadCtl(){
-  try{const r=await fetch(`${SUPA}/rest/v1/controle?tela=eq.${TELA}&select=modo,apresentacao_id,slide,atualizado`,{headers:{apikey:KEY}});
+  try{const r=await fetch(`${SUPA}/rest/v1/controle?tela=eq.${TELA}&select=modo,apresentacao_id,slide,pausado,atualizado`,{headers:{apikey:KEY}});
     const row=(await r.json())[0];if(row&&row.atualizado!==ctl.atualizado)applyCtl(row)}catch(e){}
 }
 function passaSlide(d){
