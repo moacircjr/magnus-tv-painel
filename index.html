@@ -98,11 +98,11 @@
   <div id="vLogin" class="login hidden">
     <h1>Magnus <b>TV</b></h1>
     <div id="lPasso1">
-      <p>Entre com seu e-mail.</p>
+      <p>Entre com seu e-mail e senha.</p>
       <input type="email" id="email" placeholder="seu@email.com" autocomplete="email">
-      <div id="lSenhaBox" class="hidden" style="margin-top:8px"><input type="password" id="senha" placeholder="Sua senha" autocomplete="current-password"></div>
-      <div style="margin-top:10px"><button class="primary" id="btnLogin" style="width:100%">Receber código por e-mail</button></div>
-      <p style="margin-top:12px"><button class="ghost small" id="btnModo">Entrar com senha</button></p>
+      <div id="lSenhaBox" style="margin-top:8px"><input type="password" id="senha" placeholder="Sua senha" autocomplete="current-password"></div>
+      <div style="margin-top:10px"><button class="primary" id="btnLogin" style="width:100%">Entrar</button></div>
+      <p style="margin-top:12px"><button class="ghost small" id="btnModo">Esqueci / não tenho senha: receber link por e-mail</button></p>
     </div>
     <div id="lPasso2" class="hidden">
       <p>Mandamos um código de 6 dígitos para <b id="lEmail"></b>. Digite aqui:</p>
@@ -179,12 +179,12 @@ async function boot(){
   sb.auth.onAuthStateChange((_e, s) => { if(s) start(s); });
 }
 function showLogin(){ $("vLogin").classList.remove("hidden"); $("vApp").classList.add("hidden"); }
-let modoSenha = false;
+let modoSenha = true;
 const lmsg = t => $("loginMsg").textContent = t;
 const erroAuth = e => (e.status === 429 || /rate limit/i.test(e.message)) ? "Muitos e-mails pedidos em pouco tempo. Espere alguns minutos (ou entre com senha, se já criou uma)." :
   /invalid login/i.test(e.message) ? "E-mail ou senha errados." : /expired|invalid/i.test(e.message) ? "Código errado ou vencido. Peça um novo." : "Erro: " + e.message;
 $("btnModo").onclick = () => { modoSenha = !modoSenha; $("lSenhaBox").classList.toggle("hidden", !modoSenha);
-  $("btnLogin").textContent = modoSenha ? "Entrar" : "Receber código por e-mail"; $("btnModo").textContent = modoSenha ? "Entrar com código por e-mail" : "Entrar com senha"; lmsg(""); };
+  $("btnLogin").textContent = modoSenha ? "Entrar" : "Receber link por e-mail"; $("btnModo").textContent = modoSenha ? "Esqueci / não tenho senha: receber link por e-mail" : "Entrar com senha"; lmsg(""); };
 $("btnLogin").onclick = async () => {
   const email = $("email").value.trim().toLowerCase();
   if(!email) return;
@@ -196,7 +196,7 @@ $("btnLogin").onclick = async () => {
   const { error } = await sb.auth.signInWithOtp({ email, options:{ emailRedirectTo: location.origin + location.pathname } });
   $("btnLogin").disabled = false;
   if(error){ lmsg(erroAuth(error)); return; }
-  $("lEmail").textContent = email; $("lPasso1").classList.add("hidden"); $("lPasso2").classList.remove("hidden"); $("codigo").focus();
+  lmsg("Pronto! Abra o e-mail MAIS RECENTE e toque no link neste mesmo aparelho e navegador. Depois, crie uma senha no botão \"Criar senha\".");
 };
 $("senha").onkeydown = e => { if(e.key === "Enter") $("btnLogin").click(); };
 $("email").onkeydown = e => { if(e.key === "Enter") $("btnLogin").click(); };
