@@ -473,7 +473,7 @@ $("btnPdf").onclick = () => pickFile("application/pdf", async f => {
       const page = await pdf.getPage(i);
       const v1 = page.getViewport({ scale: 1 });
       const scale = Math.min(1920 / v1.width, 1080 / v1.height) * 1.0;
-      const big = await render(page, scale), small = await render(page, scale * 0.25);
+      const big = await renderPage(page, scale), small = await renderPage(page, scale * 0.25);
       slides.push(await upBlob(big, `apresentacoes/${id}/${i}.jpg`));
       thumbs.push(await upBlob(small, `apresentacoes/${id}/t${i}.jpg`));
       fill.style.width = Math.round(i / pdf.numPages * 100) + "%";
@@ -485,7 +485,7 @@ $("btnPdf").onclick = () => pickFile("application/pdf", async f => {
   }catch(e){ msg.textContent = "Erro: " + (e.message || e); }
   setTimeout(() => { bar.style.display = "none"; }, 1500);
 });
-async function render(page, scale){
+async function renderPage(page, scale){
   const vp = page.getViewport({ scale });
   const c = document.createElement("canvas"); c.width = Math.round(vp.width); c.height = Math.round(vp.height);
   const ctx = c.getContext("2d"); ctx.fillStyle = "#fff"; ctx.fillRect(0, 0, c.width, c.height);
