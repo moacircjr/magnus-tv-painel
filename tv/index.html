@@ -2,485 +2,340 @@
 <html lang="pt-BR">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=1920,height=1080">
-<title>Magnus TV</title>
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;800&display=swap" rel="stylesheet">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>TV Magnus</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anton&family=DM+Serif+Display:ital@0;1&family=Instrument+Sans:wght@400;500;600;700&display=swap">
 <style>
+/* Linha Magnus: grafite granulado, brilho laranja, condensada em caixa alta + serifa laranja + sans limpa */
+:root{
+  --bg:#141414; --bg2:#1d1c1b; --fg:#f1ede8; --soft:rgba(241,237,232,.62); --line:rgba(241,237,232,.16);
+  --or:#ee5a2c; --or2:#ff7a3d;
+  --cond:"Anton","Impact",sans-serif; --serif:"DM Serif Display",Georgia,serif; --sans:"Instrument Sans",system-ui,sans-serif;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0}
+body{background:var(--bg);color:var(--fg);font-family:var(--sans);overflow:hidden}
+#stage{position:absolute;left:50%;top:50%;width:1920px;height:1080px;translate:-50% -50%;transform-origin:center;overflow:hidden;background:radial-gradient(140% 100% at 50% 0%,var(--bg2),var(--bg))}
 
+/* brilhos laranja + granulado */
+.blob{position:absolute;border-radius:50%;filter:blur(120px);animation:drift 50s ease-in-out infinite alternate}
+.b1{width:820px;height:820px;left:-420px;top:-380px;background:var(--or);opacity:.55}
+.b2{width:700px;height:520px;left:-200px;bottom:-380px;background:var(--or2);opacity:.35;animation-duration:62s}
+.b3{width:760px;height:620px;right:-260px;bottom:-300px;background:var(--or);opacity:.40;animation-duration:56s}
+.b4{width:520px;height:420px;left:820px;top:-360px;background:#ff9a5c;opacity:.18}
+@keyframes drift{to{transform:translate(80px,50px) scale(1.1)}}
+.grain{position:absolute;inset:0;pointer-events:none;opacity:.20;mix-blend-mode:overlay;
+  background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='220' height='220'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>")}
+.speed{position:absolute;left:0;right:0;top:520px;height:2px;background:linear-gradient(90deg,transparent,rgba(241,237,232,.10) 20%,rgba(238,90,44,.35) 50%,transparent);filter:blur(1px)}
 
-  :root{
-    --ink:#0d0d0e; --ink2:#3b3833; --muted:#7c7368;
-    --o1:#f7931e; --o2:#f15a24; --o3:#ffc27a;
-    --glass:rgba(255,255,255,.30); --glass-edge:rgba(255,255,255,.75);
-  }
-  *{box-sizing:border-box;margin:0;padding:0}
-  html{width:100%;height:100%;overflow:hidden;background:#0b0b0c}
-  body{position:absolute;left:0;top:0;transform-origin:0 0}
-  body{width:1920px;height:1080px;overflow:hidden;cursor:none;background:#f4f2ee;color:var(--ink);
-    font-family:"Poppins","Helvetica Neue",Arial,sans-serif;-webkit-font-smoothing:antialiased}
+/* vidro líquido escuro */
+.glass{position:absolute;border-radius:40px;
+  background:linear-gradient(160deg,rgba(255,255,255,.10),rgba(255,255,255,.03) 50%,rgba(255,255,255,.06));
+  -webkit-backdrop-filter:blur(30px) saturate(150%);backdrop-filter:blur(30px) saturate(150%);
+  border:1.5px solid rgba(255,255,255,.14);
+  box-shadow:inset 0 1.5px 0 rgba(255,255,255,.22),inset 0 -20px 40px rgba(238,90,44,.05),0 30px 80px rgba(0,0,0,.45)}
+.glass::after{content:"";position:absolute;left:14%;right:14%;bottom:-1.5px;height:2px;border-radius:2px;
+  background:linear-gradient(90deg,transparent,rgba(255,160,110,.9),transparent);pointer-events:none}
+.pill{border-radius:999px}
 
-  /* ---------- Fundo: luz laranja + granulado ---------- */
-  #bg{position:absolute;inset:0;overflow:hidden;background:#f3f1ed}
-  .blob{position:absolute;border-radius:50%;filter:blur(90px);opacity:.85;will-change:transform}
-  .b1{width:900px;height:520px;left:620px;top:-300px;background:radial-gradient(circle,var(--o1),rgba(247,147,30,0) 70%);animation:drift1 38s ease-in-out infinite alternate}
-  .b2{width:760px;height:760px;left:-360px;top:640px;background:radial-gradient(circle,var(--o1),rgba(247,147,30,0) 68%);animation:drift2 44s ease-in-out infinite alternate}
-  .b3{width:820px;height:640px;left:1220px;top:600px;background:radial-gradient(circle,var(--o2) 0%,var(--o1) 35%,rgba(247,147,30,0) 70%);animation:drift3 33s ease-in-out infinite alternate}
-  .b4{width:560px;height:560px;left:1650px;top:120px;background:radial-gradient(circle,var(--o3),rgba(255,194,122,0) 70%);animation:drift1 51s ease-in-out infinite alternate-reverse}
-  @keyframes drift1{to{transform:translate(-120px,60px) scale(1.12)}}
-  @keyframes drift2{to{transform:translate(140px,-90px) scale(1.08)}}
-  @keyframes drift3{to{transform:translate(-160px,-50px) scale(1.15)}}
-  #grain{position:absolute;inset:0;opacity:.32;mix-blend-mode:multiply;pointer-events:none;
-    background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='240' height='240'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 .5  0 0 0 0 .5  0 0 0 0 .5  0 0 0 .55 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>")}
+/* marca */
+.logo{position:absolute;left:96px;top:70px;font:700 150px/1 var(--sans);letter-spacing:-.06em}
+.logo i{color:var(--or);font-style:normal}
+.slogan{position:absolute;left:100px;top:252px;font:italic 46px/1 var(--serif);color:var(--soft)}
+.slogan b{font-weight:400;color:var(--or)}
 
-  /* ---------- Liquid glass ---------- */
-  .glass{position:absolute;background:var(--glass);
-    -webkit-backdrop-filter:blur(26px) saturate(170%);backdrop-filter:blur(26px) saturate(170%);
-    border:1.5px solid rgba(255,255,255,.55);
-    box-shadow:
-      inset 0 2px 1px rgba(255,255,255,.95),
-      inset 0 -2px 2px rgba(255,255,255,.35),
-      inset 0 0 40px rgba(255,255,255,.25),
-      0 30px 70px rgba(120,64,10,.16),
-      0 4px 14px rgba(120,64,10,.08);
-    overflow:hidden;transition:box-shadow .35s, transform .35s}
-  .glass::before{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;
-    background:linear-gradient(135deg,rgba(255,255,255,.55) 0%,rgba(255,255,255,.08) 28%,rgba(255,255,255,0) 55%,rgba(255,255,255,.18) 100%)}
-  .glass::after{content:"";position:absolute;left:12%;right:12%;bottom:-1px;height:3px;border-radius:3px;pointer-events:none;
-    background:linear-gradient(90deg,rgba(255,255,255,0),rgba(255,255,255,.95),rgba(255,255,255,0));opacity:.8}
-  .glass.focus{box-shadow:
-      inset 0 2px 1px rgba(255,255,255,.95), inset 0 -2px 2px rgba(255,255,255,.35), inset 0 0 40px rgba(255,255,255,.25),
-      0 0 0 4px rgba(241,90,36,.55), 0 30px 80px rgba(241,90,36,.28)}
+/* clima e hora */
+.wx{left:56px;top:800px;width:680px;height:108px;display:flex;align-items:center;gap:20px;padding:0 44px}
+.wx svg{width:50px;height:50px;flex:none}
+.wx .t{font:400 70px/1 var(--cond);letter-spacing:.01em}
+.wx .d{margin-left:auto;text-align:right;display:flex;flex-direction:column;white-space:nowrap;font-size:20px;line-height:1.3;color:var(--soft)}
+.wx .d b{font:italic 32px/1.1 var(--serif);color:var(--or);font-weight:400}
+.hr{left:56px;top:928px;width:680px;height:108px;display:flex;align-items:center;justify-content:space-between;padding:0 44px}
+.hr .h{font:400 70px/1 var(--cond);font-variant-numeric:tabular-nums;letter-spacing:.01em}
+.hr .dt{text-align:right;font-size:20px;line-height:1.3;color:var(--soft)}
+.hr .dt b{display:block;font:italic 32px/1.1 var(--serif);color:var(--or);text-transform:capitalize}
 
-  /* ---------- Logo ---------- */
-  #logo{position:absolute;left:92px;top:78px;font-weight:800;font-size:178px;letter-spacing:-.045em;line-height:1;color:var(--ink)}
-  #logo img{height:150px;width:auto;display:block}
+.ico{position:absolute;width:54px;height:54px}
+.ig-ico{left:930px;top:80px}
+.nw-ico{left:930px;top:604px}
+.ico svg{width:100%;height:100%}
 
-  /* ---------- Recados (área livre à esquerda) ---------- */
-  #recado{position:absolute;left:98px;top:380px;width:700px;font-size:46px;line-height:1.18;font-weight:600;letter-spacing:-.02em;color:var(--ink2);
-    transition:opacity .8s, transform .8s}
-  #recado.out{opacity:0;transform:translateY(14px)}
-  #recado small{display:block;font-size:22px;font-weight:600;letter-spacing:.2em;text-transform:uppercase;color:var(--o2);margin-bottom:18px}
+/* painéis */
+.panel{left:1010px;width:850px;padding:28px;display:flex;gap:32px;align-items:stretch;overflow:hidden}
+.ig{top:56px;height:500px}
+.nw{top:580px;height:456px}
+.media{position:relative;width:390px;height:440px;border-radius:26px;overflow:hidden;flex:none;background:linear-gradient(160deg,rgba(255,255,255,.07),rgba(0,0,0,.35));border:1px solid rgba(255,255,255,.10);box-shadow:0 14px 40px rgba(0,0,0,.5)}
+.nw .media{width:330px;height:396px;border-radius:22px}
+.clip{position:absolute;overflow:hidden;border-radius:18px;transition:opacity .8s}
+.clip.off{opacity:0}
+.clip iframe{position:absolute;border:0;width:540px;height:960px;transform-origin:0 0;pointer-events:none}
+.media img{width:100%;height:100%;object-fit:cover;display:block;filter:saturate(.9) contrast(1.05)}
+.body{display:flex;flex-direction:column;gap:13px;min-width:0;flex:1;padding:40px 4px 84px 0;justify-content:center;transition:opacity .6s,transform .6s}
+.body.out{opacity:0;transform:translateX(14px)}
+.k{font:600 17px var(--sans);letter-spacing:.18em;text-transform:uppercase;color:var(--or)}
+.n{font:400 44px/0.98 var(--cond);text-transform:uppercase;letter-spacing:.01em;text-wrap:balance;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.leg{font-size:21px;line-height:1.5;color:rgba(241,237,232,.82);white-space:pre-line;display:-webkit-box;-webkit-line-clamp:6;-webkit-box-orient:vertical;overflow:hidden}
+.nw .n{font:400 33px/1.14 var(--serif);text-transform:none;letter-spacing:-.01em;-webkit-line-clamp:5}
+.nw .leg{-webkit-line-clamp:3;font-size:20px}
+.count{position:absolute;top:26px;right:28px;padding:8px 18px;border-radius:999px;background:rgba(0,0,0,.45);font:500 20px var(--sans);font-variant-numeric:tabular-nums;color:var(--fg)}
+.ctl{position:absolute;right:28px;bottom:28px;display:flex;align-items:center;gap:14px}
+.ctl span{display:none}
+.btn{width:62px;height:62px;border-radius:50%;cursor:pointer;display:grid;place-items:center;
+  background:linear-gradient(180deg,rgba(255,255,255,.14),rgba(255,255,255,.04));border:1.5px solid rgba(255,255,255,.18);
+  box-shadow:inset 0 1.5px 0 rgba(255,255,255,.25),0 10px 24px rgba(0,0,0,.4);transition:transform .15s,background .2s}
+.btn:hover{background:var(--or);transform:scale(1.06)} .btn:active{transform:scale(.95)}
+.btn:focus-visible{outline:3px solid var(--or);outline-offset:3px}
+.btn svg{width:24px;height:24px;stroke:var(--fg)}
 
-  /* ---------- Pílulas ---------- */
-  .pill{left:38px;width:468px;border-radius:999px;display:flex;align-items:center;padding:0 40px;gap:22px}
-  #pWeather{top:800px;height:112px}
-  #pClock{top:934px;height:112px}
-  #wIcon{font-size:52px;line-height:1}
-  .pill .big{font-size:52px;font-weight:600;letter-spacing:-.02em;line-height:1}
-  .pill .small{font-size:21px;color:var(--ink2);line-height:1.25}
-  .pill .small b{font-weight:600;color:var(--ink)}
-  #cTime{font-variant-numeric:tabular-nums}
+.prog{position:absolute;left:28px;bottom:12px;width:390px;height:3px;border-radius:3px;background:rgba(255,255,255,.12);overflow:hidden}
+.nw .prog{width:330px}
+.prog i{display:block;height:100%;width:0;background:var(--or)}
+.hidden{display:none!important}
 
-  /* ---------- Ícones laterais ---------- */
-  #igIcon{position:absolute;left:905px;top:130px;width:142px;height:142px}
-  #megaIcon{position:absolute;left:868px;top:612px;width:220px;height:180px}
-
-  /* ---------- Cards ---------- */
-  .card{left:1060px;width:802px;border-radius:44px}
-  #cInsta{top:122px;height:426px}
-  #cNews{top:620px;height:424px}
-  .slide{position:absolute;inset:0;display:flex;opacity:0;transition:opacity .7s ease}
-  .slide.on{opacity:1}
-
-  /* Instagram */
-  .ig-frame{position:relative;flex:none;width:262px;height:394px;margin:16px 0 16px 16px;border-radius:30px;overflow:hidden;background:#fff;
-    box-shadow:0 10px 30px rgba(0,0,0,.12)}
-  .ig-frame iframe{position:absolute;left:0;top:-54px;width:326px;height:640px;border:0;transform:scale(.805);transform-origin:0 0;background:#fff}
-  .ig-body{flex:1;padding:40px 44px 34px 34px;display:flex;flex-direction:column;min-width:0}
-  .kicker{font-size:19px;font-weight:600;letter-spacing:.2em;text-transform:uppercase;color:var(--o2)}
-  .ig-client{font-size:52px;font-weight:800;letter-spacing:-.03em;line-height:1.02;margin-top:10px}
-  .ig-handle{font-size:24px;color:var(--ink2);margin-top:8px}
-  .ig-text{font-size:21px;line-height:1.42;color:var(--ink2);margin-top:18px;display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical;overflow:hidden}
-  .meta{margin-top:auto;display:flex;align-items:center;gap:14px;font-size:18px;color:var(--muted)}
-  .tag{padding:5px 14px;border-radius:999px;background:rgba(255,255,255,.6);border:1px solid rgba(255,255,255,.9);color:var(--ink2);font-weight:600;font-size:16px;letter-spacing:.06em}
-  .count{margin-left:auto;font-variant-numeric:tabular-nums;font-weight:600;color:var(--ink2)}
-
-  /* Notícias */
-  .nw-img{flex:none;width:330px;height:392px;margin:16px 0 16px 16px;border-radius:30px;background:#ddd center/cover no-repeat;box-shadow:0 10px 30px rgba(0,0,0,.12)}
-  .nw-body{flex:1;padding:38px 42px 32px 34px;display:flex;flex-direction:column;min-width:0}
-  .nw-title{font-size:34px;font-weight:600;letter-spacing:-.02em;line-height:1.18;margin-top:12px;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
-  .nw-sum{font-size:19px;line-height:1.42;color:var(--ink2);margin-top:14px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
-  .qr{width:86px;height:86px;flex:none;border-radius:12px;background:#fff;padding:6px;margin-left:auto}
-  .qr img{width:100%;height:100%;display:block;image-rendering:pixelated}
-  .qr-hint{font-size:15px;line-height:1.25;color:var(--muted);text-align:right;width:120px}
-
-  /* Barra de progresso + dica de controle */
-  .prog{position:absolute;left:44px;right:44px;bottom:14px;height:4px;border-radius:2px;background:rgba(255,255,255,.45);overflow:hidden;z-index:2}
-  .prog i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--o1),var(--o2));border-radius:2px}
-  .hint{position:absolute;z-index:3;font-size:16px;font-weight:600;color:var(--ink2);opacity:0;transition:opacity .3s;
-    background:rgba(255,255,255,.7);padding:6px 14px;border-radius:999px}
-  .hint.on{opacity:1}
-  #hInsta{left:900px;top:300px} #hNews{left:900px;top:810px}
-
-  /* ---------- Modo apresentação (tela cheia) ---------- */
-  #show{position:absolute;inset:0;z-index:50;background:#0b0b0c;opacity:0;pointer-events:none;transition:opacity .6s ease}
-  #show.on{opacity:1}
-  #show .sl{position:absolute;inset:0;background:#0b0b0c center/contain no-repeat;opacity:0;transition:opacity .45s ease}
-  #show .sl.on{opacity:1}
-  #showBar{position:absolute;left:50%;bottom:28px;transform:translateX(-50%);display:flex;gap:16px;align-items:center;
-    padding:10px 22px;border-radius:999px;background:rgba(20,20,22,.55);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);
-    color:#fff;font-size:20px;font-weight:600;opacity:0;transition:opacity .4s}
-  #showBar.on{opacity:1}
-  #showBar i{display:block;width:8px;height:8px;border-radius:50%;background:#ff6a3d;box-shadow:0 0 0 4px rgba(255,106,61,.25)}
-  .empty{margin:auto;font-size:24px;color:var(--muted)}
+/* modo apresentação (tela cheia, controlado pelo painel/celular) */
+#show{position:fixed;inset:0;z-index:50;background:#0b0b0b;opacity:0;pointer-events:none;transition:opacity .6s}
+#show.on{opacity:1}
+#show .sl{position:absolute;inset:0;background:#0b0b0b center/contain no-repeat;opacity:0;transition:opacity .45s}
+#show .sl.on{opacity:1}
+#showBar{position:absolute;left:50%;bottom:2.4vh;transform:translateX(-50%);display:flex;gap:14px;align-items:center;padding:.7vh 1.4vw;border-radius:999px;
+  background:rgba(20,20,20,.6);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);color:#f1ede8;font:600 1.6vh var(--sans);opacity:0;transition:opacity .4s}
+#showBar.on{opacity:1}
+#showBar i{width:8px;height:8px;border-radius:50%;background:var(--or);box-shadow:0 0 0 4px rgba(238,90,44,.3)}
+@media (prefers-reduced-motion:reduce){.blob{animation:none}}
 </style>
-<script>
-  // Ajusta a tela 1920x1080 ao tamanho real do navegador/TV
-  (function(){ function fit(){ var s = Math.min(innerWidth/1920, innerHeight/1080); var b = document.body; if(!b) return;
-    b.style.transform = "scale(" + s + ")"; b.style.left = ((innerWidth - 1920*s)/2) + "px"; b.style.top = ((innerHeight - 1080*s)/2) + "px"; }
-    addEventListener("resize", fit); addEventListener("load", fit); document.addEventListener("DOMContentLoaded", fit); })();
-</script>
 </head>
 <body>
-<div id="bg"><div class="blob b1"></div><div class="blob b2"></div><div class="blob b3"></div><div class="blob b4"></div></div>
-<div id="grain"></div>
+<div id="stage">
+  <div class="blob b1"></div><div class="blob b2"></div><div class="blob b3"></div><div class="blob b4"></div>
+  <div class="speed"></div><div class="grain"></div>
 
-<div id="logo">magnus</div>
-<div id="recado" class="out"></div>
+  <div class="logo">magnus<i>.</i></div>
+  <div class="slogan">desperte sua <b>criatividade.</b></div>
 
-<div id="pWeather" class="glass pill"><span id="wIcon">⛅</span><div><div class="big" id="wTemp">--°</div><div class="small" id="wDesc">Previsão do tempo</div></div></div>
-<div id="pClock" class="glass pill"><div><div class="big" id="cTime">--:--</div></div><div class="small" id="cDate">Horário de Brasília</div></div>
+  <div class="glass pill wx">
+    <svg id="wxIco" viewBox="0 0 64 64" fill="none" stroke="#f1ede8" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"></svg>
+    <span class="t" id="wxT">--°</span>
+    <span class="d"><b id="wxC">São Ludgero</b><span id="wxD">Previsão do tempo</span></span>
+  </div>
+  <div class="glass pill hr">
+    <span class="h" id="hora">--:--</span>
+    <span class="dt"><b id="dia"></b><span id="data"></span></span>
+  </div>
 
-<!-- Ícone Instagram -->
-<svg id="igIcon" viewBox="0 0 120 120" aria-hidden="true">
-  <defs><linearGradient id="igg" x1="0" y1="1" x2="1" y2="0">
-    <stop offset="0" stop-color="#feda75"/><stop offset=".3" stop-color="#fa7e1e"/><stop offset=".6" stop-color="#d62976"/><stop offset="1" stop-color="#962fbf"/></linearGradient></defs>
-  <rect x="9" y="9" width="102" height="102" rx="30" fill="none" stroke="url(#igg)" stroke-width="12"/>
-  <circle cx="60" cy="60" r="23" fill="none" stroke="url(#igg)" stroke-width="12"/>
-  <circle cx="89" cy="31" r="7" fill="#d62976"/>
-</svg>
-<!-- Ícone megafone -->
-<svg id="megaIcon" viewBox="0 0 220 180" fill="none" stroke="#0d0d0e" stroke-width="7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-  <path d="M30 88c-6 2-10 9-8 16s9 11 16 10l14-3"/>
-  <path d="M30 88l90-50c10 18 16 40 16 62s-4 30-10 40l-74-30z"/>
-  <ellipse cx="131" cy="88" rx="13" ry="52" transform="rotate(-12 131 88)"/>
-  <path d="M120 70c8 2 12 10 10 20s-8 14-14 12"/>
-  <path d="M54 111l10 32c2 6 8 9 14 7s9-8 7-14l-8-24"/>
-  <path d="M163 40l14-15M170 72l26-10M171 98l26 2M166 122l20 10"/>
-</svg>
+  <div class="ico ig-ico">
+    <svg viewBox="0 0 24 24" fill="none" stroke="#f1ede8" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+      <rect x="2.5" y="2.5" width="19" height="19" rx="5.5"/><circle cx="12" cy="12" r="4.6"/><circle cx="17.6" cy="6.4" r="1.2" fill="#ee5a2c" stroke="#ee5a2c"/>
+    </svg>
+  </div>
+  <div class="ico nw-ico">
+    <svg viewBox="0 0 24 24" fill="none" stroke="#f1ede8" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="12" cy="12" r="9.3"/><path d="M2.9 9.4h18.2M2.9 14.6h18.2" stroke="#ee5a2c"/><path d="M12 2.7c2.6 2.6 3.9 6 3.9 9.3s-1.3 6.7-3.9 9.3c-2.6-2.6-3.9-6-3.9-9.3S9.4 5.3 12 2.7z"/>
+    </svg>
+  </div>
 
-<div id="hInsta" class="hint">◀ ▶ trocar post</div><div id="hNews" class="hint">◀ ▶ trocar notícia</div>
-<div id="cInsta" class="glass card"><div class="prog"><i id="pgInsta"></i></div></div>
-<div id="cNews" class="glass card"><div class="prog"><i id="pgNews"></i></div></div>
+  <!-- Instagram: último post de cada cliente -->
+  <section class="glass panel ig">
+    <div class="media"><div class="clip" id="cA"><iframe id="ifA" title="Post do Instagram" scrolling="no"></iframe></div><div class="clip off" id="cB"><iframe id="ifB" title="Post do Instagram" scrolling="no"></iframe></div></div>
+    <div class="body" id="igBody">
+      <span class="k" id="igK">Instagram</span>
+      <span class="n" id="igN">Carregando…</span>
+      <div class="leg" id="igL"></div>
+    </div>
+    <div class="ctl">
+      <button class="btn" id="igPrev" aria-label="Cliente anterior"><svg viewBox="0 0 24 24" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg></button>
+      <span></span>
+      <button class="btn" id="igNext" aria-label="Próximo cliente"><svg viewBox="0 0 24 24" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></svg></button>
+    </div>
+    <div class="prog"><i id="igProg"></i></div>
+    <div class="count" id="igPos"></div>
+  </section>
 
+  <!-- Notícias -->
+  <section class="glass panel nw">
+    <div class="media" id="nwMedia"><img id="nwImg" alt=""></div>
+    <div class="body" id="nwBody">
+      <span class="k" id="nwK">Notícias</span>
+      <span class="n" id="nwT">Carregando…</span>
+      <div class="leg" id="nwP"></div>
+    </div>
+    <div class="ctl">
+      <button class="btn" id="nwPrev" aria-label="Notícia anterior"><svg viewBox="0 0 24 24" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg></button>
+      <span></span>
+      <button class="btn" id="nwNext" aria-label="Próxima notícia"><svg viewBox="0 0 24 24" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></svg></button>
+    </div>
+    <div class="prog"><i id="nwProg"></i></div>
+    <div class="count" id="nwPos"></div>
+  </section>
+</div>
 <div id="show"><div id="showBar"><i></i><span id="showTitle"></span><span id="showCount"></span></div></div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.min.js"></script>
 <script>
-// Configuração de conexão da TV com o banco (Supabase).
-window.MAGNUS_TV = {
-  supabaseUrl: "https://ocqgortpqhkgxlxvphkx.supabase.co",
-  supabaseKey: "sb_publishable_q6xrUBBo9rZeoiBmKnHhPQ_RHECq_6z", // chave pública (somente leitura)
-  telaId: "principal",
-  intervaloAtualizacao: 60
-};
-</script>
-<script>
-(function(){
-  var CFG = window.MAGNUS_TV || {};
-  var SB = (CFG.supabaseUrl || "").replace(/\/$/, ""), KEY = CFG.supabaseKey || "";
-  var T_INSTA = (CFG.tempoInstagram || 15) * 1000, T_NEWS = (CFG.tempoNoticia || 12) * 1000;
+/* ===== Ajustes ===== */
+const SUPA="https://ocqgortpqhkgxlxvphkx.supabase.co";
+const KEY="sb_publishable_q6xrUBBo9rZeoiBmKnHhPQ_RHECq_6z";
+const DUR_POST=30000;      // tempo de cada cliente
+const DUR_NOTICIA=40000;   // tempo de cada notícia
+const ATUALIZA_MIN=10;     // busca dados novos a cada 10 min
+const IG_TOPO=57;          // altura do cabeçalho do embed do Instagram (corta para mostrar só a imagem)
+const REELS_LARG=380;      // largura do vídeo dentro do embed de reels (tira as faixas pretas)
+const FEED_ALT=540;        // altura da imagem de feed no embed (540 = quadrado, 675 = 4:5)
+const CIDADE={lat:-28.33,lon:-49.18,nome:"São Ludgero"};
 
-  function get(url, headers, cb){
-    var x = new XMLHttpRequest(); x.open("GET", url);
-    for(var k in headers) x.setRequestHeader(k, headers[k]);
-    x.timeout = 20000;
-    x.onload = function(){ try{ cb(null, JSON.parse(x.responseText)); }catch(e){ cb(e); } };
-    x.onerror = x.ontimeout = function(){ cb(new Error("rede")); };
-    x.send();
-  }
-  function cache(k, v){ try{ if(v === undefined) return JSON.parse(localStorage.getItem(k)); localStorage.setItem(k, JSON.stringify(v)); }catch(e){ return null; } }
-  function $(id){ return document.getElementById(id); }
-  function el(tag, cls, txt){ var e = document.createElement(tag); if(cls) e.className = cls; if(txt != null) e.textContent = txt; return e; }
-  function ago(iso){
-    var d = (Date.now() - new Date(iso).getTime()) / 60000;
-    if(isNaN(d)) return "";
-    if(d < 60) return "há " + Math.max(1, Math.round(d)) + " min";
-    if(d < 1440) return "há " + Math.round(d/60) + " h";
-    var n = Math.round(d/1440); return n === 1 ? "ontem" : "há " + n + " dias";
-  }
+const $=id=>document.getElementById(id);
+const H={apikey:KEY,Authorization:"Bearer "+KEY};
+let posts=[],nots=[],pi=0,ni=0,tp=0,tn=0,ativo="A";
 
-  // ================= Carrossel genérico =================
-  function Carousel(cardId, progId, interval, render){
-    this.card = $(cardId); this.prog = $(progId); this.interval = interval; this.render = render;
-    this.items = []; this.i = 0; this.timer = null; this.pausedUntil = 0; this.started = 0;
-  }
-  Carousel.prototype.set = function(items){
-    var sig = JSON.stringify(items);
-    if(sig === this.sig) return; this.sig = sig;
-    var curKey = this.items[this.i] && (this.items[this.i].link || this.items[this.i].id);
-    this.items = items;
-    var j = -1; for(var k=0;k<items.length;k++){ if((items[k].link||items[k].id) === curKey){ j = k; break; } }
-    this.i = j >= 0 ? j : 0;
-    this.show(true);
-  };
-  Carousel.prototype.go = function(step, manual){
-    if(!this.items.length) return;
-    this.i = (this.i + step + this.items.length) % this.items.length;
-    if(manual) this.pausedUntil = Date.now() + 45000;   // depois de mexer no controle, segura um pouco mais
-    this.show(false);
-  };
-  Carousel.prototype.show = function(instant){
-    var self = this, old = this.card.querySelectorAll(".slide");
-    var s;
-    if(!this.items.length){ s = el("div","slide"); s.appendChild(el("div","empty","Carregando…")); }
-    else s = this.render(this.items[this.i], this.i, this.items.length);
-    this.card.appendChild(s);
-    setTimeout(function(){ s.className += " on"; }, instant ? 0 : 40);
-    setTimeout(function(){ for(var k=0;k<old.length;k++) old[k].parentNode && old[k].parentNode.removeChild(old[k]); }, 800);
-    clearTimeout(this.timer);
-    var wait = Math.max(this.interval, this.pausedUntil - Date.now());
-    this.started = Date.now(); this.wait = wait;
-    this.timer = setTimeout(function(){ self.go(1); }, wait);
-  };
-  Carousel.prototype.tick = function(){
-    if(!this.items.length){ this.prog.style.width = "0"; return; }
-    var p = Math.min(1, (Date.now() - this.started) / this.wait);
-    this.prog.style.width = (p * 100).toFixed(1) + "%";
-  };
+function fit(){const s=Math.min(innerWidth/1920,innerHeight/1080);$("stage").style.transform=`scale(${s})`}
+addEventListener("resize",fit);fit();
 
-  // ================= Instagram dos clientes =================
-  function igEmbed(link){
-    var m = /instagram\.com\/(p|reel|tv)\/([A-Za-z0-9_-]+)/.exec(link || "");
-    return m ? "https://www.instagram.com/" + (m[1] === "tv" ? "p" : m[1]) + "/" + m[2] + "/embed/" : "about:blank";
-  }
-  var insta = new Carousel("cInsta", "pgInsta", T_INSTA, function(p, i, n){
-    var s = el("div","slide");
-    var f = el("div","ig-frame"), ifr = document.createElement("iframe");
-    ifr.setAttribute("scrolling","no"); ifr.src = igEmbed(p.link); f.appendChild(ifr);
-    var b = el("div","ig-body");
-    b.appendChild(el("div","kicker","Nossos clientes"));
-    b.appendChild(el("div","ig-client", p.cliente || "Cliente"));
-    if(p.canal && p.canal.toLowerCase() !== (p.cliente||"").toLowerCase()) b.appendChild(el("div","ig-handle", p.canal));
-    if(p.texto) b.appendChild(el("div","ig-text", p.texto));
-    var m = el("div","meta");
-    m.appendChild(el("span","tag", p.formato === "REELS" ? "REELS" : "POST"));
-    if(p.data) m.appendChild(el("span","", ago(p.data)));
-    m.appendChild(el("span","count", (i+1) + " / " + n));
-    b.appendChild(m);
-    s.appendChild(f); s.appendChild(b);
-    return s;
-  });
+const embed=l=>{const m=(l||"").match(/instagram\.com\/(p|reel|tv)\/([^/?#]+)/);return m?`https://www.instagram.com/${m[1]==="tv"?"p":m[1]}/${m[2]}/embed/`:null};
+const quando=d=>{if(!d)return"";const h=(Date.now()-new Date(d))/36e5;if(h<1)return"agora há pouco";if(h<24)return`há ${Math.round(h)} h`;const x=Math.round(h/24);return x===1?"ontem":`há ${x} dias`};
 
-  function loadInsta(){
-    if(!SB){ insta.set(cache("mtv_insta") || []); return; }
-    get(SB + "/rest/v1/posts_clientes?select=id,cliente,canal,link,formato,texto,data&order=data.desc&limit=" + (CFG.maxPosts || 30),
-      { apikey: KEY }, function(err, rows){
-        var manual = ((current && current.itens) || []).filter(function(it){ return it.tipo === "instagram" && it.ativo !== false; })
-          .map(function(it){ return { link: it.url, cliente: it.cliente, canal: it.legenda, texto: "", formato: /\/reel\//.test(it.url) ? "REELS" : "FEED" }; });
-        if(err || !rows || !rows.length){ rows = cache("mtv_insta") || []; } else cache("mtv_insta", rows);
-        // um post por cliente primeiro (variedade), depois o resto
-        var seen = {}, first = [], rest = [];
-        rows.forEach(function(r){ (seen[r.cliente] ? rest : first).push(r); seen[r.cliente] = 1; });
-        insta.set(manual.concat(first, rest));
-      });
-  }
-
-  // ================= Notícias =================
-  function qrImg(text){
-    try{
-      var q = qrcode(0, "M"); q.addData(text); q.make();
-      var img = new Image(); img.src = q.createDataURL(4, 0); return img;
-    }catch(e){ return null; }
-  }
-  var news = new Carousel("cNews", "pgNews", T_NEWS, function(n, i, total){
-    var s = el("div","slide");
-    var im = el("div","nw-img"); if(n.imagem) im.style.backgroundImage = "url('" + n.imagem.replace(/'/g,"%27") + "')";
-    var b = el("div","nw-body");
-    b.appendChild(el("div","kicker", n.fonte));
-    b.appendChild(el("div","nw-title", (n.titulo || "").replace(/^Not[ií]cias\s+/, "")));
-    if(n.resumo) b.appendChild(el("div","nw-sum", n.resumo));
-    var m = el("div","meta");
-    m.appendChild(el("span","", ago(n.data)));
-    m.appendChild(el("span","count", (i+1) + " / " + total));
-    var qr = n.link && qrImg(n.link);
-    if(qr){ m.appendChild(el("span","qr-hint","Leia no celular")); var q = el("div","qr"); q.appendChild(qr); m.appendChild(q); m.querySelector(".count").style.marginLeft = "0"; m.firstChild.style.marginRight = "auto"; }
-    b.appendChild(m);
-    s.appendChild(im); s.appendChild(b);
-    return s;
-  });
-  function loadNews(){
-    if(!SB){ news.set(cache("mtv_news") || []); return; }
-    get(SB + "/functions/v1/noticias", {}, function(err, j){
-      var list = (!err && j && j.noticias && j.noticias.length) ? j.noticias : (cache("mtv_news") || []);
-      if(!err && j && j.noticias && j.noticias.length) cache("mtv_news", list);
-      news.set(list);
-    });
-  }
-
-  // ================= Configuração do painel (marca, recados, clima) =================
-  var current = null;
-  function loadConfig(){
-    if(!SB) return applyCfg(cache("mtv_cfg") || {});
-    get(SB + "/rest/v1/telas?id=eq." + encodeURIComponent(CFG.telaId || "principal") + "&select=config", { apikey: KEY }, function(err, rows){
-      var c = (!err && rows && rows[0] && rows[0].config) || cache("mtv_cfg") || {};
-      if(!err && rows && rows[0]) cache("mtv_cfg", c);
-      applyCfg(c);
-    });
-  }
-  function applyCfg(c){
-    var first = !current; current = c;
-    var logo = $("logo");
-    if(c.logo){ if(!logo.querySelector("img")){ logo.textContent = ""; var im = new Image(); logo.appendChild(im); } logo.querySelector("img").src = c.logo; }
-    else logo.textContent = (c.marca || "magnus").toLowerCase();
-    recados = (c.recados || []).filter(Boolean);
-    if(first){ rotateRecado(); loadInsta(); }
-    updateWeather();
-  }
-
-  // Recados grandes na área livre
-  var recados = [], ri = -1;
-  function rotateRecado(){
-    var r = $("recado");
-    if(!recados.length){ r.className = "out"; return; }
-    r.className = "out";
-    setTimeout(function(){
-      ri = (ri + 1) % recados.length;
-      r.innerHTML = ""; r.appendChild(el("small","", "Recado")); r.appendChild(document.createTextNode(recados[ri]));
-      r.className = "";
-    }, 800);
-  }
-  setInterval(rotateRecado, 14000);
-
-  // ================= Relógio =================
-  var DIAS = ["domingo","segunda-feira","terça-feira","quarta-feira","quinta-feira","sexta-feira","sábado"];
-  var MESES = ["janeiro","fevereiro","março","abril","maio","junho","julho","agosto","setembro","outubro","novembro","dezembro"];
-  function brt(){ // horário de Brasília (UTC-3, sem horário de verão)
-    var n = new Date(); return new Date(n.getTime() + n.getTimezoneOffset()*60000 - 3*3600000);
-  }
-  function tick(){
-    var d = brt();
-    $("cTime").textContent = pad(d.getHours()) + ":" + pad(d.getMinutes());
-    $("cDate").innerHTML = "";
-    var b = el("b","", DIAS[d.getDay()]); $("cDate").appendChild(b);
-    $("cDate").appendChild(document.createElement("br"));
-    $("cDate").appendChild(document.createTextNode(d.getDate() + " de " + MESES[d.getMonth()]));
-    insta.tick(); news.tick();
-  }
-  function pad(n){ return n < 10 ? "0"+n : ""+n; }
-
-  // ================= Clima (Open-Meteo) =================
-  var WMO = {0:["☀️","Céu limpo"],1:["🌤️","Poucas nuvens"],2:["⛅","Parcialmente nublado"],3:["☁️","Nublado"],45:["🌫️","Neblina"],48:["🌫️","Neblina"],
-    51:["🌦️","Garoa"],53:["🌦️","Garoa"],55:["🌧️","Garoa forte"],61:["🌧️","Chuva fraca"],63:["🌧️","Chuva"],65:["🌧️","Chuva forte"],
-    80:["🌦️","Pancadas de chuva"],81:["🌧️","Pancadas de chuva"],82:["⛈️","Chuva forte"],95:["⛈️","Trovoadas"],96:["⛈️","Trovoadas"],99:["⛈️","Trovoadas"]};
-  var lastW = 0;
-  function updateWeather(){
-    var c = (current && current.clima) || { cidade: "São Ludgero", lat: -28.33, lon: -49.18 };
-    if(Date.now() - lastW < 10*60*1000 && lastW) return; lastW = Date.now();
-    get("https://api.open-meteo.com/v1/forecast?latitude=" + c.lat + "&longitude=" + c.lon +
-        "&current=temperature_2m,weather_code,is_day&daily=temperature_2m_max,temperature_2m_min&forecast_days=1&timezone=America%2FSao_Paulo", {}, function(err, j){
-      if(err || !j || !j.current) return;
-      var w = WMO[j.current.weather_code] || ["🌡️",""];
-      var icon = (!j.current.is_day && j.current.weather_code <= 1) ? "🌙" : w[0];
-      $("wIcon").textContent = icon;
-      $("wTemp").textContent = Math.round(j.current.temperature_2m) + "°";
-      $("wDesc").innerHTML = "";
-      $("wDesc").appendChild(el("b","", (c.cidade || "") + " · " + w[1]));
-      $("wDesc").appendChild(document.createElement("br"));
-      if(j.daily) $("wDesc").appendChild(document.createTextNode("máx " + Math.round(j.daily.temperature_2m_max[0]) + "°  mín " + Math.round(j.daily.temperature_2m_min[0]) + "°"));
-    });
-  }
-
-
-  // ================= Modo apresentação (controlado pelo painel/celular) =================
-  var ctl = { modo: "mural", apresentacao_id: null, slide: 0 }, deck = null, barTimer = null;
-  function preload(urls){ (urls || []).forEach(function(u){ var i = new Image(); i.src = u; }); }
-  function showSlide(){
-    var box = $("show");
-    if(ctl.modo !== "apresentacao" || !deck || !deck.slides || !deck.slides.length){ box.className = ""; return; }
-    var n = Math.max(0, Math.min(deck.slides.length - 1, ctl.slide || 0));
-    var url = deck.slides[n];
-    var cur = box.querySelector(".sl.on");
-    if(!cur || cur.getAttribute("data-u") !== url){
-      var d = el("div","sl"); d.setAttribute("data-u", url); d.style.backgroundImage = "url('" + url.replace(/'/g,"%27") + "')";
-      box.insertBefore(d, $("showBar"));
-      setTimeout(function(){ d.className = "sl on"; }, 20);
-      var olds = box.querySelectorAll(".sl"); setTimeout(function(){ for(var k=0;k<olds.length;k++) if(olds[k] !== d && olds[k].parentNode) olds[k].parentNode.removeChild(olds[k]); }, 600);
-    }
-    preload(deck.slides.slice(n + 1, n + 3));
-    box.className = "on";
-    $("showTitle").textContent = deck.titulo || "";
-    $("showCount").textContent = (n + 1) + " / " + deck.slides.length;
-    $("showBar").className = "on"; clearTimeout(barTimer);
-    barTimer = setTimeout(function(){ $("showBar").className = ""; }, 3500);
-  }
-  function applyCtl(row){
-    if(!row) return;
-    var changedDeck = row.apresentacao_id !== ctl.apresentacao_id;
-    ctl = row;
-    if(ctl.modo === "apresentacao" && ctl.apresentacao_id && (changedDeck || !deck)){
-      get(SB + "/rest/v1/apresentacoes?id=eq." + ctl.apresentacao_id + "&select=id,titulo,slides", { apikey: KEY }, function(err, rows){
-        deck = (!err && rows && rows[0]) || null; if(deck) preload(deck.slides.slice(0, 3)); showSlide();
-      });
-    } else showSlide();
-  }
-  function loadCtl(){
-    if(!SB) return;
-    get(SB + "/rest/v1/controle?tela=eq." + encodeURIComponent(CFG.telaId || "principal") + "&select=modo,apresentacao_id,slide,atualizado", { apikey: KEY }, function(err, rows){
-      if(!err && rows && rows[0] && rows[0].atualizado !== ctl.atualizado) applyCtl(rows[0]);
-    });
-  }
-  function stepSlide(delta){
-    if(ctl.modo !== "apresentacao" || !deck) return;
-    ctl.slide = Math.max(0, Math.min(deck.slides.length - 1, (ctl.slide || 0) + delta)); showSlide();   // resposta imediata na TV
-    var x = new XMLHttpRequest(); x.open("POST", SB + "/rest/v1/rpc/mudar_slide");
-    x.setRequestHeader("apikey", KEY); x.setRequestHeader("Content-Type", "application/json");
-    x.send(JSON.stringify({ p_tela: CFG.telaId || "principal", p_delta: delta }));
-  }
-  // Tempo real (troca na hora); se cair, o "loadCtl" a cada 4s garante
+async function carregar(){
   try{
-    if(SB && window.supabase){
-      var rt = window.supabase.createClient(SB, KEY);
-      rt.channel("tv-" + (CFG.telaId || "principal"))
-        .on("postgres_changes", { event: "*", schema: "public", table: "controle", filter: "tela=eq." + (CFG.telaId || "principal") },
-            function(p){ if(p && p.new) applyCtl(p.new); })
-        .subscribe();
-    }
+    const r=await fetch(`${SUPA}/rest/v1/posts_clientes?select=*&order=data.desc,id.desc&limit=300`,{headers:H});
+    if(r.ok){const all=await r.json();const vistos=new Set(),ult=[];
+      for(const p of all){if(vistos.has(p.cliente))continue;vistos.add(p.cliente);ult.push(p)}   // só o último post de cada cliente
+      if(ult.length){const atual=posts[pi]?.cliente;posts=ult;const k=posts.findIndex(p=>p.cliente===atual);pi=k>=0?k:0}}
   }catch(e){}
-  setInterval(loadCtl, 4000);
+  try{
+    const r=await fetch(`${SUPA}/functions/v1/noticias`);
+    if(r.ok){const n=await r.json();if(n.noticias?.length){nots=n.noticias;if(ni>=nots.length)ni=0}}
+  }catch(e){}
+  clima();
+}
 
-  // ================= Controle remoto =================
-  var focus = null, focusTimer = null;
-  function setFocus(which){
-    focus = which;
-    $("cInsta").className = "glass card" + (which === "insta" ? " focus" : "");
-    $("cNews").className  = "glass card" + (which === "news"  ? " focus" : "");
-    $("hInsta").className = "hint" + (which === "insta" ? " on" : "");
-    $("hNews").className  = "hint" + (which === "news"  ? " on" : "");
-    clearTimeout(focusTimer);
-    focusTimer = setTimeout(function(){ setFocus(null); }, 12000);   // some sozinho
+/* ===== Previsão do tempo (Open-Meteo, sem chave) ===== */
+const ICO={
+ sol:'<circle cx="32" cy="32" r="11"/><path d="M32 6v7M32 51v7M6 32h7M51 32h7M13.6 13.6l5 5M45.4 45.4l5 5M13.6 50.4l5-5M45.4 18.6l5-5"/>',
+ parcial:'<circle cx="24" cy="22" r="9"/><path d="M24 4v4M8 22H4M12 10l-3-3M36 10l3-3"/><path d="M20 50h28a10 10 0 0 0 0-20 14 14 0 0 0-27 3 8.5 8.5 0 0 0-1 17z"/>',
+ nuvem:'<path d="M18 48h30a11 11 0 0 0 0-22 15 15 0 0 0-29 3 9.5 9.5 0 0 0-1 19z"/>',
+ chuva:'<path d="M18 40h30a11 11 0 0 0 0-22 15 15 0 0 0-29 3 9.5 9.5 0 0 0-1 19z"/><path d="M22 48l-3 8M34 48l-3 8M46 48l-3 8"/>',
+ trovao:'<path d="M18 38h30a11 11 0 0 0 0-22 15 15 0 0 0-29 3 9.5 9.5 0 0 0-1 19z"/><path d="M34 40l-6 10h8l-5 10"/>',
+ nevoa:'<path d="M10 24h44M6 34h52M12 44h40"/>'
+};
+function tipo(c){if(c===0)return["sol","Céu limpo"];if(c<=2)return["parcial","Poucas nuvens"];if(c===3)return["nuvem","Nublado"];
+  if(c===45||c===48)return["nevoa","Neblina"];if(c>=95)return["trovao","Trovoadas"];if(c>=51)return["chuva",c<=57?"Garoa":"Chuva"];return["nuvem","Nublado"]}
+async function clima(){
+  try{
+    const r=await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${CIDADE.lat}&longitude=${CIDADE.lon}&current=temperature_2m,weather_code&daily=temperature_2m_max,temperature_2m_min,precipitation_probability_max&timezone=America%2FSao_Paulo&forecast_days=1`);
+    const j=await r.json();const[ic,txt]=tipo(j.current.weather_code);
+    $("wxIco").innerHTML=ICO[ic];$("wxT").textContent=Math.round(j.current.temperature_2m)+"°";
+    $("wxC").textContent=`${CIDADE.nome} · ${txt}`;
+    $("wxD").textContent=`Máx ${Math.round(j.daily.temperature_2m_max[0])}° · Mín ${Math.round(j.daily.temperature_2m_min[0])}° · Chuva ${j.daily.precipitation_probability_max[0]??0}%`;
+  }catch(e){$("wxIco").innerHTML=ICO.parcial}
+}
+
+function encaixa(id,formato){             // recorta só a imagem/vídeo do embed, na proporção certa
+  // No embed, o post fica numa caixa de 540px de largura.
+  // Feed: caixa 540x540. Reels: caixa 540x675 com o vídeo 9:16 (380px) no meio e faixas pretas nas laterais.
+  const W=390,H=440,reels=formato==="REELS";
+  const mw=reels?REELS_LARG:540, mh=reels?675:FEED_ALT, x0=(540-mw)/2;
+  const s=Math.min(W/mw,H/mh);
+  const c=$("c"+id),f=$("if"+id);
+  c.style.width=mw*s+"px";c.style.height=mh*s+"px";
+  c.style.left=(W-mw*s)/2+"px";c.style.top=(H-mh*s)/2+"px";
+  f.style.transform=`scale(${s})`;f.style.left=(-x0*s)+"px";f.style.top=(-IG_TOPO*s)+"px";
+}
+
+function mostrarPost(){
+  const s=posts[pi];if(!s)return;
+  const b=$("igBody");b.classList.add("out");
+  const url=embed(s.link),prox=ativo==="A"?"B":"A",fr=$("if"+prox),old=$("if"+ativo);
+  if(url&&old.src!==url){encaixa(prox,s.formato);fr.onload=()=>{$("c"+prox).classList.remove("off");$("c"+ativo).classList.add("off");ativo=prox};fr.src=url}
+  setTimeout(()=>{
+    $("igN").textContent=s.cliente;
+    $("igK").textContent=`${s.formato==="REELS"?"Reels":"Post"} · ${quando(s.data)}`;
+    $("igL").textContent=(s.texto||"").trim();
+    $("igPos").textContent=`${pi+1}/${posts.length}`;
+    b.classList.remove("out");
+  },400);
+  tp=Date.now();
+}
+function mostrarNoticia(){
+  const n=nots[ni];if(!n)return;
+  const b=$("nwBody");b.classList.add("out");
+  setTimeout(()=>{
+    $("nwK").textContent=n.fonte||"Notícias";$("nwT").textContent=n.titulo||"";$("nwP").textContent=n.resumo||"";
+    const im=$("nwImg");if(n.imagem){im.src=n.imagem;$("nwMedia").classList.remove("hidden")}else $("nwMedia").classList.add("hidden");
+    $("nwPos").textContent=`${ni+1}/${nots.length}`;
+    b.classList.remove("out");
+  },400);
+  tn=Date.now();
+}
+$("nwImg").onerror=()=>$("nwMedia").classList.add("hidden");
+
+const passaPost=d=>{if(!posts.length)return;pi=(pi+d+posts.length)%posts.length;mostrarPost()};
+const passaNot=d=>{if(!nots.length)return;ni=(ni+d+nots.length)%nots.length;mostrarNoticia()};
+$("igPrev").onclick=()=>passaPost(-1);$("igNext").onclick=()=>passaPost(1);
+$("nwPrev").onclick=()=>passaNot(-1);$("nwNext").onclick=()=>passaNot(1);
+// controle remoto / teclado: ← → troca cliente, ↑ ↓ troca notícia, F tela cheia
+document.addEventListener("keydown",e=>{
+  if(ctl.modo==="apresentacao"&&deck){if(e.key==="ArrowRight"||e.key==="ArrowDown"||e.key==="Enter")passaSlide(1);if(e.key==="ArrowLeft"||e.key==="ArrowUp")passaSlide(-1);return}
+  if(e.key==="ArrowRight")passaPost(1);if(e.key==="ArrowLeft")passaPost(-1);
+  if(e.key==="ArrowDown")passaNot(1);if(e.key==="ArrowUp")passaNot(-1);
+  if(e.key==="f"||e.key==="F")document.documentElement.requestFullscreen?.().catch(()=>{});
+});
+document.addEventListener("dblclick",()=>document.documentElement.requestFullscreen?.().catch(()=>{}));
+
+
+/* ===== Modo apresentação ===== */
+const TELA="principal";
+let ctl={modo:"mural",apresentacao_id:null,slide:0},deck=null,barT=null;
+const pre=u=>(u||[]).forEach(x=>{const i=new Image();i.src=x});
+function showSlide(){
+  const box=$("show");
+  if(ctl.modo!=="apresentacao"||!deck?.slides?.length){box.className="";return}
+  const n=Math.max(0,Math.min(deck.slides.length-1,ctl.slide||0)),url=deck.slides[n];
+  const cur=box.querySelector(".sl.on");
+  if(!cur||cur.dataset.u!==url){
+    const d=document.createElement("div");d.className="sl";d.dataset.u=url;d.style.backgroundImage=`url("${url}")`;
+    box.insertBefore(d,$("showBar"));requestAnimationFrame(()=>requestAnimationFrame(()=>d.classList.add("on")));
+    const olds=[...box.querySelectorAll(".sl")].filter(x=>x!==d);setTimeout(()=>olds.forEach(x=>x.remove()),600);
   }
-  try{ tizen.tvinputdevice.registerKeyBatch(["ChannelUp","ChannelDown","MediaPlayPause","MediaFastForward","MediaRewind"]); }catch(e){}
-  document.addEventListener("keydown", function(e){
-    var k = e.keyCode;
-    if(k === 10009){ try{ tizen.application.getCurrentApplication().exit(); }catch(err){} return; } // Voltar
-    if(ctl.modo === "apresentacao" && deck){
-      if(k === 39 || k === 417 || k === 40 || k === 13) stepSlide(1); else if(k === 37 || k === 412 || k === 38) stepSlide(-1); else return;
-      e.preventDefault(); return;
-    }
-    if(k === 38 || k === 427){ setFocus("insta"); }                 // ▲ / CH+
-    else if(k === 40 || k === 428){ setFocus("news"); }             // ▼ / CH-
-    else if(k === 39 || k === 417){ (focus === "news" ? news : insta).go(1, true); setFocus(focus || "insta"); }   // ▶ / FF
-    else if(k === 37 || k === 412){ (focus === "news" ? news : insta).go(-1, true); setFocus(focus || "insta"); }  // ◀ / REW
-    else if(k === 13){ setFocus(focus === "insta" ? "news" : "insta"); }   // OK alterna
-    else return;
-    e.preventDefault();
-  });
+  pre(deck.slides.slice(n+1,n+3));box.className="on";
+  $("showTitle").textContent=deck.titulo||"";$("showCount").textContent=`${n+1} / ${deck.slides.length}`;
+  $("showBar").className="on";clearTimeout(barT);barT=setTimeout(()=>$("showBar").className="",3500);
+}
+async function applyCtl(row){
+  if(!row)return;const mudou=row.apresentacao_id!==ctl.apresentacao_id;ctl=row;
+  if(ctl.modo==="apresentacao"&&ctl.apresentacao_id&&(mudou||!deck)){
+    try{const r=await fetch(`${SUPA}/rest/v1/apresentacoes?id=eq.${ctl.apresentacao_id}&select=id,titulo,slides`,{headers:{apikey:KEY}});
+      deck=(await r.json())[0]||null;if(deck)pre(deck.slides.slice(0,3))}catch(e){}
+  }
+  showSlide();
+}
+async function loadCtl(){
+  try{const r=await fetch(`${SUPA}/rest/v1/controle?tela=eq.${TELA}&select=modo,apresentacao_id,slide,atualizado`,{headers:{apikey:KEY}});
+    const row=(await r.json())[0];if(row&&row.atualizado!==ctl.atualizado)applyCtl(row)}catch(e){}
+}
+function passaSlide(d){
+  if(ctl.modo!=="apresentacao"||!deck)return;
+  ctl.slide=Math.max(0,Math.min(deck.slides.length-1,(ctl.slide||0)+d));showSlide();
+  fetch(`${SUPA}/rest/v1/rpc/mudar_slide`,{method:"POST",headers:{apikey:KEY,"Content-Type":"application/json"},body:JSON.stringify({p_tela:TELA,p_delta:d})}).catch(()=>{});
+}
+try{supabase.createClient(SUPA,KEY).channel("tv-"+TELA)
+  .on("postgres_changes",{event:"*",schema:"public",table:"controle",filter:"tela=eq."+TELA},p=>p.new&&applyCtl(p.new)).subscribe()}catch(e){}
+setInterval(loadCtl,4000);loadCtl();
 
-  // Não deixa a TV entrar em descanso de tela
-  try{ webapis.appcommon.setScreenSaver(webapis.appcommon.AppCommonScreenSaverState.SCREEN_SAVER_OFF); }catch(e){}
+function relogio(){const n=new Date(),o={timeZone:"America/Sao_Paulo"};
+  $("hora").textContent=n.toLocaleTimeString("pt-BR",{...o,hour:"2-digit",minute:"2-digit"});
+  $("dia").textContent=n.toLocaleDateString("pt-BR",{...o,weekday:"long"});
+  $("data").textContent=n.toLocaleDateString("pt-BR",{...o,day:"2-digit",month:"long"})+" · Brasília"}
 
-  // ================= Início =================
-  tick(); setInterval(tick, 250);
-  loadConfig(); loadNews(); loadCtl();
-  setTimeout(function(){ if(!insta.items.length) loadInsta(); }, 4000);
-  setInterval(loadConfig, (CFG.intervaloAtualizacao || 60) * 1000);
-  setInterval(loadInsta, 5 * 60 * 1000);
-  setInterval(loadNews, 15 * 60 * 1000);
-  setInterval(function(){ lastW = 0; updateWeather(); }, 15 * 60 * 1000);
-})();
+setInterval(()=>{relogio();
+  if(posts.length){const f=(Date.now()-tp)/DUR_POST;$("igProg").style.width=Math.min(f,1)*100+"%";if(f>=1)passaPost(1)}
+  if(nots.length){const f=(Date.now()-tn)/DUR_NOTICIA;$("nwProg").style.width=Math.min(f,1)*100+"%";if(f>=1)passaNot(1)}
+},250);
+setInterval(carregar,ATUALIZA_MIN*60000);
+setTimeout(()=>location.reload(),6*3600000);
+try{navigator.wakeLock?.request("screen").catch(()=>{})}catch(e){}
+
+relogio();
+carregar().then(()=>{mostrarPost();mostrarNoticia()});
 </script>
 </body>
 </html>
