@@ -1,0 +1,660 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex">
+<title>Magnus TV · Layout</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<style>
+:root{
+  --bg:#f6f4ef; --card:#fff; --ink:#16181c; --muted:#6b7078; --line:#e6e2d9;
+  --accent:#c98d1e; --accent-ink:#fff; --danger:#c2412d; --soft:#f1ede4; --sel:#ee5a2c;
+}
+@media (prefers-color-scheme:dark){
+  :root{ --bg:#0f1114; --card:#171a1f; --ink:#f1efe9; --muted:#9aa0a8; --line:#262a31;
+    --accent:#e8b04b; --accent-ink:#16181c; --soft:#1e2228; }
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.4 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;-webkit-font-smoothing:antialiased}
+button{appearance:none;border:1px solid var(--line);background:var(--soft);color:var(--ink);padding:8px 12px;border-radius:9px;font:inherit;font-weight:600;cursor:pointer;white-space:nowrap}
+button:hover{border-color:var(--muted)}
+button.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+button.ghost{background:transparent}
+button.small{padding:5px 9px;font-size:12px}
+button.on{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+button:disabled{opacity:.45;cursor:default}
+input[type=text],input[type=number],textarea,select{width:100%;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink);font:inherit}
+textarea{min-height:70px;resize:vertical}
+input[type=range]{width:100%;accent-color:var(--accent)}
+input[type=color]{width:100%;height:36px;border:1px solid var(--line);border-radius:8px;background:var(--bg);padding:2px}
+label{display:block;font-size:12px;color:var(--muted);margin:10px 0 4px}
+.chk{display:flex;align-items:center;gap:8px;margin:8px 0;font-size:13px;color:var(--ink);cursor:pointer}
+.chk input{margin:0}
+.hint{font-size:12px;color:var(--muted);margin:6px 0 0}
+.hidden{display:none!important}
+
+header{position:sticky;top:0;z-index:20;display:flex;align-items:center;gap:10px;padding:10px 16px;background:var(--card);border-bottom:1px solid var(--line);flex-wrap:wrap}
+header h1{font-size:17px;margin:0 8px 0 0;letter-spacing:-.01em}
+header h1 b{color:var(--accent)}
+header a{color:var(--muted);text-decoration:none;font-weight:600}
+header .sp{flex:1}
+#msg{font-size:13px;color:var(--muted)}
+
+.ed{display:grid;grid-template-columns:250px minmax(0,1fr) 290px;gap:14px;padding:14px;align-items:start}
+.col{display:flex;flex-direction:column;gap:12px;min-width:0}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px 14px}
+.card h3{font-size:11px;margin:0 0 8px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:700}
+.adds{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.adds button{text-align:left;padding:8px 10px}
+.adds button.tem{opacity:.6}
+.seg{display:flex;gap:4px;flex-wrap:wrap}
+.seg button{flex:1;padding:6px 8px;font-size:12px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:6px 8px}
+.grid2 label{margin-top:4px}
+.rowb{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.rowb button{flex:1}
+
+/* camadas */
+.lay{display:flex;flex-direction:column;gap:3px}
+.lay div{display:flex;align-items:center;gap:6px;padding:6px 8px;border-radius:8px;cursor:pointer;border:1px solid transparent}
+.lay div:hover{background:var(--soft)}
+.lay div.sel{border-color:var(--sel);background:var(--soft)}
+.lay div.off span{opacity:.45;text-decoration:line-through}
+.lay span{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.lay button{padding:2px 7px;font-size:12px;border:0;background:transparent}
+
+/* tela */
+.cv{position:relative;width:100%;aspect-ratio:16/9;background:#000;border-radius:12px;overflow:hidden;box-shadow:0 10px 30px rgba(0,0,0,.25);user-select:none;-webkit-user-select:none}
+.cv iframe,.cv #ov{position:absolute;left:0;top:0;width:1920px;height:1080px;transform-origin:0 0;border:0}
+.cv iframe{pointer-events:none}
+#ov{touch-action:none}
+.h{position:absolute;outline:calc(1.5px*var(--inv)) dashed rgba(255,255,255,.0);cursor:move}
+.h:hover{outline-color:rgba(255,255,255,.55)}
+.h.sel{outline:calc(2px*var(--inv)) solid var(--sel);z-index:999!important}
+.h.oc{display:none}
+.h .tag{position:absolute;left:0;top:calc(-26px*var(--inv));font:600 calc(12px*var(--inv))/1 -apple-system,sans-serif;background:var(--sel);color:#fff;padding:calc(5px*var(--inv)) calc(7px*var(--inv));border-radius:calc(5px*var(--inv));white-space:nowrap;display:none}
+.h.sel .tag{display:block}
+.hd{position:absolute;width:calc(14px*var(--inv));height:calc(14px*var(--inv));background:#fff;border:calc(2px*var(--inv)) solid var(--sel);border-radius:50%;display:none;translate:-50% -50%}
+.h.sel .hd{display:block}
+.hd[data-d=nw]{left:0;top:0;cursor:nwse-resize}.hd[data-d=n]{left:50%;top:0;cursor:ns-resize}.hd[data-d=ne]{left:100%;top:0;cursor:nesw-resize}
+.hd[data-d=e]{left:100%;top:50%;cursor:ew-resize}.hd[data-d=se]{left:100%;top:100%;cursor:nwse-resize}.hd[data-d=s]{left:50%;top:100%;cursor:ns-resize}
+.hd[data-d=sw]{left:0;top:100%;cursor:nesw-resize}.hd[data-d=w]{left:0;top:50%;cursor:ew-resize}
+.gd{position:absolute;background:#ff3fa4;pointer-events:none;z-index:1000}
+.gd.v{top:0;bottom:0;width:calc(1px*var(--inv))}
+.gd.hz{left:0;right:0;height:calc(1px*var(--inv))}
+.tip{font-size:12px;color:var(--muted);margin-top:8px;text-align:center}
+
+.empty{color:var(--muted);font-size:13px;text-align:center;padding:16px 0}
+.thumbbg{width:100%;aspect-ratio:16/9;border-radius:8px;background:#222 center/cover;margin-top:8px;border:1px solid var(--line)}
+.tema{display:flex;align-items:center;gap:6px;padding:5px 0;border-top:1px solid var(--line)}
+.tema span{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.prog{height:4px;border-radius:2px;background:var(--soft);overflow:hidden;margin-top:6px;display:none}
+.prog i{display:block;height:100%;width:0;background:var(--accent);transition:width .3s}
+.login{max-width:420px;margin:15vh auto;text-align:center;padding:0 16px}
+.login p{color:var(--muted)}
+
+@media (max-width:1100px){
+  .ed{grid-template-columns:1fr}
+  .c-tela{order:-2}
+  #insp{order:-1}
+}
+</style>
+</head>
+<body>
+<div id="vLogin" class="login hidden">
+  <h1>Magnus <b style="color:var(--accent)">TV</b></h1>
+  <p>Para editar o layout, entre primeiro pelo painel com seu e-mail.</p>
+  <p><a href="../"><button class="primary">Ir para o painel</button></a></p>
+</div>
+
+<div id="vApp" class="hidden">
+<header>
+  <a href="../">← Painel</a>
+  <h1>Layout da <b>TV</b></h1>
+  <button class="small" id="bUndo" title="Desfazer (Ctrl+Z)">↶ Desfazer</button>
+  <button class="small" id="bRedo" title="Refazer (Ctrl+Shift+Z)">↷ Refazer</button>
+  <span class="sp"></span>
+  <span id="msg">Carregando…</span>
+  <button class="ghost small" id="bDesc">Descartar</button>
+  <button class="primary" id="bSalvar" disabled>Salvar na TV</button>
+</header>
+
+<main class="ed">
+  <div class="col">
+    <div class="card">
+      <h3>Adicionar bloco</h3>
+      <div class="adds">
+        <button data-add="instagram">📷 Instagram</button>
+        <button data-add="noticias">📰 Notícias</button>
+        <button data-add="clima">⛅ Clima</button>
+        <button data-add="hora">🕒 Horário</button>
+        <button data-add="texto">🔤 Texto</button>
+        <button data-add="logo">✳️ Logo</button>
+        <button data-add="imagem">🖼️ Imagem</button>
+      </div>
+      <p class="hint">Imagem serve para adesivos, selos e enfeites temáticos (PNG com fundo transparente fica ótimo).</p>
+    </div>
+    <div class="card">
+      <h3>Camadas</h3>
+      <div class="lay" id="layers"></div>
+      <p class="hint">O de cima fica na frente. 👁 esconde sem apagar.</p>
+    </div>
+    <div class="card">
+      <h3>Fundo</h3>
+      <div class="seg" id="fTipo">
+        <button data-t="padrao">Magnus</button><button data-t="imagem">Imagem</button><button data-t="video">Vídeo</button><button data-t="cor">Cor</button>
+      </div>
+      <div id="fArq" class="hidden">
+        <div class="thumbbg" id="fThumb"></div>
+        <div class="rowb"><button id="fUp">Enviar arquivo</button></div>
+        <div class="prog" id="fProg"><i></i></div>
+        <p class="hint" id="fHint">Ideal: 1920×1080. Vídeo em MP4 até 50 MB (toca em loop, sem som).</p>
+      </div>
+      <div id="fCorBox" class="hidden"><label>Cor do fundo</label><input type="color" id="fCor"></div>
+      <label>Escurecer o fundo <span id="fDimV"></span></label><input type="range" id="fDim" min="0" max="85" step="1">
+      <label class="chk"><input type="checkbox" id="fBri"> Brilhos laranja</label>
+      <label class="chk"><input type="checkbox" id="fGra"> Granulado</label>
+    </div>
+    <div class="card">
+      <h3>Temas salvos</h3>
+      <div id="temas"></div>
+      <div class="rowb"><button id="tSalvar">＋ Guardar layout atual</button></div>
+      <div class="rowb"><button class="ghost" id="tPadrao">Voltar ao padrão Magnus</button></div>
+      <p class="hint">Guarde versões (Natal, Outubro Rosa…) e troque com um clique. Depois de aplicar, toque em Salvar na TV.</p>
+    </div>
+  </div>
+
+  <div class="col c-tela">
+    <div class="cv" id="cv">
+      <iframe id="tv" title="Prévia da TV" src="../tv/?preview=1"></iframe>
+      <div id="ov"></div>
+    </div>
+    <div class="tip">Arraste para mover · puxe as bolinhas para redimensionar · Shift mantém a proporção · Alt desliga o ímã · setas do teclado movem (Shift = 10px) · Delete apaga</div>
+  </div>
+
+  <div class="col" id="insp"></div>
+</main>
+</div>
+<input type="file" id="file" class="hidden">
+
+<script>
+const SUPABASE_URL = "https://ocqgortpqhkgxlxvphkx.supabase.co";
+const SUPABASE_KEY = "sb_publishable_q6xrUBBo9rZeoiBmKnHhPQ_RHECq_6z";
+const TELA = "principal";
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+const $ = id => document.getElementById(id);
+const clone = o => JSON.parse(JSON.stringify(o));
+const esc = s => String(s == null ? "" : s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+
+/* Mesmo padrão da página da TV */
+const PADRAO={v:1,
+  fundo:{tipo:"padrao",escurecer:0,brilhos:true,granulado:true},
+  blocos:[
+    {id:"logo",tipo:"texto",x:92,y:70,w:720,h:150,texto:"magnus*.*",fonte:"logo",cor:"#f1ede8",alinhar:"left",vidro:false},
+    {id:"slogan",tipo:"texto",x:100,y:247,w:720,h:56,texto:"desperte sua *criatividade.*",fonte:"serif",italico:true,cor:"#a29e99",alinhar:"left",vidro:false},
+    {id:"clima",tipo:"clima",x:56,y:800,w:680,h:108,cidade:{nome:"São Ludgero",lat:-28.33,lon:-49.18}},
+    {id:"hora",tipo:"hora",x:56,y:928,w:680,h:108},
+    {id:"instagram",tipo:"instagram",x:1010,y:56,w:850,h:500,tempo:30},
+    {id:"noticias",tipo:"noticias",x:1010,y:580,w:850,h:456,tempo:40}
+  ]};
+const NOME = { instagram:"Instagram", noticias:"Notícias", clima:"Clima", hora:"Horário", texto:"Texto", imagem:"Imagem" };
+const ICONE = { instagram:"📷", noticias:"📰", clima:"⛅", hora:"🕒", texto:"🔤", imagem:"🖼️" };
+const UNICOS = ["instagram","noticias","clima","hora"];
+const W = 1920, Hh = 1080;
+
+let L = null, saved = "", temas = [], selId = null, hist = [], hi = -1, k = 1;
+
+/* ---------------- Início ---------------- */
+(async function boot(){
+  const { data:{ session } } = await sb.auth.getSession();
+  if(!session){ $("vLogin").classList.remove("hidden"); return; }
+  $("vApp").classList.remove("hidden");
+  const { data, error } = await sb.from("layout").select("atual,temas").eq("tela", TELA).maybeSingle();
+  if(error){ $("msg").textContent = "Erro ao carregar: " + error.message; }
+  L = data && data.atual && Array.isArray(data.atual.blocos) ? data.atual : clone(PADRAO);
+  if(!L.fundo) L.fundo = clone(PADRAO.fundo);
+  temas = (data && data.temas) || [];
+  saved = JSON.stringify(L);
+  commit(); tudo(); escala();
+})();
+
+/* ---------------- Prévia ---------------- */
+let pronta = false, pend = false;
+addEventListener("message", e => { if(e.data && e.data.tipo === "tv-pronta"){ pronta = true; envia(); } });
+function envia(){
+  if(!pronta || !L || pend) return; pend = true;
+  requestAnimationFrame(() => { pend = false; $("tv").contentWindow.postMessage({ tipo:"layout", layout:L }, "*"); });
+}
+function escala(){
+  const w = $("cv").clientWidth; k = w / W;
+  for(const el of [$("tv"), $("ov")]) el.style.transform = `scale(${k})`;
+  $("ov").style.setProperty("--inv", 1 / k);
+}
+addEventListener("resize", escala);
+new ResizeObserver(escala).observe($("cv"));
+
+/* ---------------- Estado / histórico ---------------- */
+function commit(){
+  const s = JSON.stringify(L);
+  if(hist[hi] === s) return;
+  hist = hist.slice(0, hi + 1); hist.push(s); if(hist.length > 80) hist.shift(); hi = hist.length - 1;
+  estado();
+}
+let cT = null;
+function commitLogo(){ clearTimeout(cT); cT = setTimeout(commit, 450); }
+function mudou(){ envia(); estado(); }
+function estado(){
+  const sujo = JSON.stringify(L) !== saved;
+  $("bSalvar").disabled = !sujo;
+  $("msg").textContent = sujo ? "Alterações não salvas" : "Tudo salvo · a TV está igual";
+  $("bUndo").disabled = hi <= 0; $("bRedo").disabled = hi >= hist.length - 1;
+}
+function volta(i){ hi = i; L = JSON.parse(hist[hi]); if(!L.blocos.find(b => b.id === selId)) selId = null; tudo(); }
+$("bUndo").onclick = () => hi > 0 && volta(hi - 1);
+$("bRedo").onclick = () => hi < hist.length - 1 && volta(hi + 1);
+function tudo(){ desenha(); camadas(); painelFundo(); inspetor(); listaTemas(); botoesAdd(); envia(); estado(); }
+
+/* ---------------- Salvar ---------------- */
+$("bSalvar").onclick = async () => {
+  $("bSalvar").disabled = true; $("msg").textContent = "Salvando…";
+  const { data, error } = await sb.from("layout").upsert({ tela: TELA, atual: L, atualizado: new Date().toISOString() }).select("tela");
+  if(error || !data || !data.length){ $("msg").textContent = error ? "Erro: " + error.message : "Sem permissão (e-mail não autorizado)."; $("bSalvar").disabled = false; return; }
+  saved = JSON.stringify(L); estado(); $("msg").textContent = "Salvo! A TV já mudou.";
+};
+$("bDesc").onclick = async () => {
+  if(JSON.stringify(L) !== saved && !confirm("Descartar o que mudou desde o último salvamento?")) return;
+  L = JSON.parse(saved); selId = null; commit(); tudo();
+};
+addEventListener("beforeunload", e => { if(L && JSON.stringify(L) !== saved){ e.preventDefault(); e.returnValue = ""; } });
+
+/* ---------------- Sobreposição (arrastar / redimensionar) ---------------- */
+function rotulo(b){ return b.tipo === "texto" ? (b.fonte === "logo" ? "Logo" : "Texto") + ": " + (b.texto || "").replace(/\*/g, "").split("\n")[0].slice(0, 28) : NOME[b.tipo] || b.tipo; }
+function desenha(){
+  const ov = $("ov"); ov.innerHTML = "";
+  L.blocos.forEach((b, i) => {
+    const d = document.createElement("div");
+    d.className = "h" + (b.id === selId ? " sel" : "") + (b.oculto ? " oc" : "");
+    d.dataset.id = b.id; d.style.zIndex = i + 1; pos(d, b);
+    d.innerHTML = `<div class="tag">${esc(rotulo(b))}</div>` + ["nw","n","ne","e","se","s","sw","w"].map(x => `<i class="hd" data-d="${x}"></i>`).join("");
+    ov.appendChild(d);
+  });
+}
+function pos(d, b){ d.style.left = b.x + "px"; d.style.top = b.y + "px"; d.style.width = b.w + "px"; d.style.height = b.h + "px"; }
+function atualizaCaixa(b){ const d = $("ov").querySelector(`[data-id="${b.id}"]`); if(d) pos(d, b); }
+function seleciona(id){
+  selId = id;
+  $("ov").querySelectorAll(".h").forEach(d => d.classList.toggle("sel", d.dataset.id === id));
+  camadas(); inspetor();
+}
+const sel = () => L.blocos.find(b => b.id === selId);
+
+let drag = null;
+$("ov").addEventListener("pointerdown", e => {
+  const hd = e.target.closest(".hd"), h = e.target.closest(".h");
+  if(!h){ seleciona(null); return; }
+  const b = L.blocos.find(x => x.id === h.dataset.id); if(!b) return;
+  if(selId !== b.id) seleciona(b.id);
+  drag = { b, d: hd ? hd.dataset.d : "move", sx: e.clientX, sy: e.clientY, o: { x:b.x, y:b.y, w:b.w, h:b.h }, mexeu:false };
+  $("ov").setPointerCapture(e.pointerId); e.preventDefault();
+});
+$("ov").addEventListener("pointermove", e => {
+  if(!drag) return;
+  const dx = (e.clientX - drag.sx) / k, dy = (e.clientY - drag.sy) / k;
+  if(!drag.mexeu && Math.abs(dx) + Math.abs(dy) < 2) return;
+  drag.mexeu = true;
+  const { b, o, d } = drag, ima = !e.altKey;
+  guias([]);
+  if(d === "move"){
+    let x = o.x + dx, y = o.y + dy, g = [];
+    if(ima){ const sx = gruda([x, x + o.w/2, x + o.w], linhas("x", b)); if(sx){ x += sx.d; g.push({v:1,p:sx.p}); }
+             const sy = gruda([y, y + o.h/2, y + o.h], linhas("y", b)); if(sy){ y += sy.d; g.push({v:0,p:sy.p}); } }
+    b.x = Math.round(x); b.y = Math.round(y); guias(g);
+  }else{
+    let x1 = o.x, y1 = o.y, x2 = o.x + o.w, y2 = o.y + o.h, g = [];
+    if(d.includes("w")) x1 += dx; if(d.includes("e")) x2 += dx;
+    if(d.includes("n")) y1 += dy; if(d.includes("s")) y2 += dy;
+    if(ima){
+      if(d.includes("w")){ const s = gruda([x1], linhas("x", b)); if(s){ x1 += s.d; g.push({v:1,p:s.p}); } }
+      if(d.includes("e")){ const s = gruda([x2], linhas("x", b)); if(s){ x2 += s.d; g.push({v:1,p:s.p}); } }
+      if(d.includes("n")){ const s = gruda([y1], linhas("y", b)); if(s){ y1 += s.d; g.push({v:0,p:s.p}); } }
+      if(d.includes("s")){ const s = gruda([y2], linhas("y", b)); if(s){ y2 += s.d; g.push({v:0,p:s.p}); } }
+    }
+    const MIN = 40;
+    if(x2 - x1 < MIN){ if(d.includes("w")) x1 = x2 - MIN; else x2 = x1 + MIN; }
+    if(y2 - y1 < MIN){ if(d.includes("n")) y1 = y2 - MIN; else y2 = y1 + MIN; }
+    const canto = d.length === 2, prop = canto && (e.shiftKey || b.tipo === "imagem");
+    if(prop){                                   // mantém a proporção
+      const r = o.w / o.h; let nw = x2 - x1, nh = y2 - y1;
+      if(nw / nh > r) nw = nh * r; else nh = nw / r;
+      if(d.includes("w")) x1 = x2 - nw; else x2 = x1 + nw;
+      if(d.includes("n")) y1 = y2 - nh; else y2 = y1 + nh;
+      g = [];
+    }
+    b.x = Math.round(x1); b.y = Math.round(y1); b.w = Math.round(x2 - x1); b.h = Math.round(y2 - y1); guias(g);
+  }
+  atualizaCaixa(b); campos(b); mudou();
+});
+function fimDrag(){ if(drag && drag.mexeu) commit(); drag = null; guias([]); }
+$("ov").addEventListener("pointerup", fimDrag);
+$("ov").addEventListener("pointercancel", fimDrag);
+$("ov").addEventListener("dblclick", e => { const t = $("iTexto"); if(t){ t.focus(); t.select(); } });
+
+function linhas(eixo, b){
+  const out = eixo === "x" ? [0, 56, W/2, W - 56, W] : [0, 56, Hh/2, Hh - 44, Hh];
+  L.blocos.forEach(o => { if(o === b || o.oculto) return;
+    if(eixo === "x") out.push(o.x, o.x + o.w/2, o.x + o.w); else out.push(o.y, o.y + o.h/2, o.y + o.h); });
+  return out;
+}
+function gruda(pontos, alvos){
+  const lim = 8 / k; let best = null;
+  for(const p of pontos) for(const a of alvos){ const d = a - p; if(Math.abs(d) <= lim && (!best || Math.abs(d) < Math.abs(best.d))) best = { d, p:a }; }
+  return best;
+}
+function guias(g){
+  $("ov").querySelectorAll(".gd").forEach(x => x.remove());
+  g.forEach(x => { const el = document.createElement("div"); el.className = "gd " + (x.v ? "v" : "hz"); el.style[x.v ? "left" : "top"] = x.p + "px"; $("ov").appendChild(el); });
+}
+
+document.addEventListener("keydown", e => {
+  if(e.target.matches("input,textarea,select")) return;
+  const z = (e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "z";
+  if(z){ e.preventDefault(); if(e.shiftKey) $("bRedo").click(); else $("bUndo").click(); return; }
+  if((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "s"){ e.preventDefault(); if(!$("bSalvar").disabled) $("bSalvar").click(); return; }
+  const b = sel(); if(!b) return;
+  if((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "d"){ e.preventDefault(); duplica(b); return; }
+  const st = e.shiftKey ? 10 : 1;
+  const mv = { ArrowLeft:[-st,0], ArrowRight:[st,0], ArrowUp:[0,-st], ArrowDown:[0,st] }[e.key];
+  if(mv){ e.preventDefault(); b.x += mv[0]; b.y += mv[1]; atualizaCaixa(b); campos(b); mudou(); commitLogo(); return; }
+  if(e.key === "Delete" || e.key === "Backspace"){ e.preventDefault(); apaga(b); }
+  if(e.key === "Escape") seleciona(null);
+});
+
+/* ---------------- Adicionar / camadas ---------------- */
+const novoId = t => t + "-" + Math.random().toString(36).slice(2, 7);
+function botoesAdd(){
+  document.querySelectorAll("[data-add]").forEach(bt => {
+    const t = bt.dataset.add, tem = UNICOS.includes(t) && L.blocos.some(b => b.tipo === t);
+    bt.classList.toggle("tem", tem); bt.title = tem ? "Já está na tela (clique para selecionar)" : "";
+  });
+}
+document.querySelectorAll("[data-add]").forEach(bt => bt.onclick = () => adiciona(bt.dataset.add));
+function adiciona(t){
+  if(UNICOS.includes(t)){
+    const ex = L.blocos.find(b => b.tipo === t);
+    if(ex){ ex.oculto = false; seleciona(ex.id); desenha(); camadas(); mudou(); commit(); return; }
+  }
+  if(t === "imagem") return pegaArquivo("image/*", async f => {
+    const url = await envio(f), r = await proporcao(url), w = Math.min(560, Math.round(560 * Math.min(1, r))), h = Math.round(w / r);
+    insere({ tipo:"imagem", w, h, url, ajuste:"contain", vidro:false });
+  });
+  const base = {
+    instagram:{ w:850, h:500, tempo:30 }, noticias:{ w:850, h:456, tempo:40 },
+    clima:{ w:680, h:108, cidade:{ nome:"São Ludgero", lat:-28.33, lon:-49.18 } }, hora:{ w:680, h:108 },
+    texto:{ w:900, h:130, texto:"Seu *texto* aqui", fonte:"cond", cor:"#f1ede8", alinhar:"center", vidro:false },
+    logo:{ w:560, h:130, texto:"magnus*.*", fonte:"logo", cor:"#f1ede8", alinhar:"left", vidro:false }
+  }[t];
+  insere(Object.assign({ tipo: t === "logo" ? "texto" : t }, base));
+}
+function insere(b){
+  b.id = novoId(b.tipo); b.x = Math.round((W - b.w) / 2); b.y = Math.round((Hh - b.h) / 2);
+  L.blocos.push(b); selId = b.id; commit(); tudo();
+}
+function duplica(b){
+  if(UNICOS.includes(b.tipo)){ alert(NOME[b.tipo] + " só pode ter um na tela."); return; }
+  const c = clone(b); c.id = novoId(b.tipo); c.x += 30; c.y += 30;
+  L.blocos.splice(L.blocos.indexOf(b) + 1, 0, c); selId = c.id; commit(); tudo();
+}
+function apaga(b){
+  L.blocos.splice(L.blocos.indexOf(b), 1); selId = null; commit(); tudo();
+}
+function camada(b, dir){
+  const a = L.blocos, i = a.indexOf(b), j = dir === "frente" ? a.length - 1 : dir === "tras" ? 0 : i + dir;
+  if(j < 0 || j >= a.length || j === i) return;
+  a.splice(i, 1); a.splice(j, 0, b); commit(); tudo();
+}
+function camadas(){
+  const box = $("layers"); box.innerHTML = "";
+  [...L.blocos].reverse().forEach(b => {
+    const d = document.createElement("div");
+    d.className = (b.id === selId ? "sel " : "") + (b.oculto ? "off" : "");
+    d.innerHTML = `${ICONE[b.tipo] || "•"}<span>${esc(rotulo(b))}</span><button title="${b.oculto ? "Mostrar" : "Esconder"}">${b.oculto ? "🙈" : "👁"}</button>`;
+    d.onclick = () => seleciona(b.id);
+    d.querySelector("button").onclick = ev => { ev.stopPropagation(); b.oculto = !b.oculto; commit(); tudo(); };
+    box.appendChild(d);
+  });
+}
+
+/* ---------------- Inspetor ---------------- */
+function campos(b){
+  for(const c of ["x","y","w","h"]){ const i = $("i_" + c); if(i && document.activeElement !== i) i.value = b[c]; }
+}
+function inspetor(){
+  const box = $("insp"), b = sel();
+  if(!b){ box.innerHTML = `<div class="card"><h3>Editar</h3><div class="empty">Clique num bloco da tela para editar.<br><br>Dica: duplo clique num texto vai direto para a edição.</div></div>`; return; }
+  const glassDef = ["instagram","noticias","clima","hora"].includes(b.tipo);
+  const vidroOn = b.vidro ?? glassDef;
+  const raioDef = ["clima","hora"].includes(b.tipo) ? Math.round(b.h / 2) : b.tipo === "texto" ? (vidroOn ? Math.min(40, Math.round(b.h/2)) : 0) : b.tipo === "imagem" ? (vidroOn ? 40 : 0) : 40;
+  let h = `<div class="card"><h3>${ICONE[b.tipo] || ""} ${esc(b.tipo === "texto" && b.fonte === "logo" ? "Logo" : NOME[b.tipo])}</h3>
+    <div class="grid2">
+      <div><label for="i_x">X</label><input type="number" id="i_x" value="${b.x}"></div>
+      <div><label for="i_y">Y</label><input type="number" id="i_y" value="${b.y}"></div>
+      <div><label for="i_w">Largura</label><input type="number" id="i_w" value="${b.w}" min="40"></div>
+      <div><label for="i_h">Altura</label><input type="number" id="i_h" value="${b.h}" min="40"></div>
+    </div>
+    <div class="rowb"><button class="small" data-a="cx">↔ Centralizar</button><button class="small" data-a="cy">↕ Centralizar</button></div>
+    <div class="rowb"><button class="small" data-a="frente">⤒ Frente</button><button class="small" data-a="+1">↑</button><button class="small" data-a="-1">↓</button><button class="small" data-a="tras">⤓ Atrás</button></div>
+    <div class="rowb">${UNICOS.includes(b.tipo) ? "" : `<button class="small" data-a="dup">Duplicar</button>`}<button class="small" data-a="oc">${b.oculto ? "Mostrar" : "Esconder"}</button><button class="small" data-a="del" style="color:var(--danger)">Apagar</button></div>
+  </div>`;
+
+  if(b.tipo === "texto"){
+    h += `<div class="card"><h3>Texto</h3>
+      <textarea id="iTexto">${esc(b.texto)}</textarea>
+      <p class="hint">Coloque *entre asteriscos* para pintar com a cor de destaque. Enter quebra a linha.</p>
+      <label>Fonte</label>
+      <select id="iFonte">
+        <option value="logo">Magnus (logo)</option><option value="cond">Condensada (Anton)</option>
+        <option value="serif">Serifada (DM Serif)</option><option value="sans">Simples</option><option value="sansb">Simples negrito</option>
+      </select>
+      <label class="chk"><input type="checkbox" id="iItal" ${b.italico ? "checked" : ""}> Itálico</label>
+      <label class="chk"><input type="checkbox" id="iMai" ${b.maiusculas ? "checked" : ""}> MAIÚSCULAS</label>
+      <div class="grid2"><div><label>Cor</label><input type="color" id="iCor" value="${b.cor || "#f1ede8"}"></div>
+      <div><label>Destaque</label><input type="color" id="iDest" value="${b.destaque || "#ee5a2c"}"></div></div>
+      <label>Alinhamento</label>
+      <div class="seg" id="iAl"><button data-v="left">Esquerda</button><button data-v="center">Centro</button><button data-v="right">Direita</button></div>
+      <label>Tamanho da letra: <b id="iTamV"></b></label><input type="range" id="iTam" min="0" max="400" step="1" value="${b.tamanho || 0}">
+      <p class="hint">No zero (automático) a letra cresce para preencher o bloco: é só redimensionar.</p>
+    </div>`;
+  }
+  if(b.tipo === "imagem"){
+    h += `<div class="card"><h3>Imagem</h3>
+      <div class="thumbbg" style="background-image:url('${esc(b.url || "")}');background-size:contain;background-repeat:no-repeat;background-position:center"></div>
+      <div class="rowb"><button id="iTroca">Trocar imagem</button></div>
+      <label>Encaixe</label><div class="seg" id="iAj"><button data-v="contain">Inteira</button><button data-v="cover">Preencher</button></div>
+    </div>`;
+  }
+  if(b.tipo === "clima"){
+    h += `<div class="card"><h3>Cidade</h3>
+      <div style="display:flex;gap:6px"><input type="text" id="iCid" value="${esc(b.cidade && b.cidade.nome)}"><button id="iCidB">Buscar</button></div>
+      <p class="hint" id="iCidM"></p></div>`;
+  }
+  if(b.tipo === "hora"){
+    h += `<div class="card"><h3>Horário</h3><label class="chk"><input type="checkbox" id="iData" ${b.data === false ? "" : "checked"}> Mostrar dia da semana e data</label>
+      <p class="hint">Sempre no horário de Brasília.</p></div>`;
+  }
+  if(b.tipo === "instagram" || b.tipo === "noticias"){
+    h += `<div class="card"><h3>${b.tipo === "instagram" ? "Posts dos clientes" : "Notícias"}</h3>
+      <label>Segundos em cada ${b.tipo === "instagram" ? "cliente" : "notícia"}</label><input type="number" id="iTempo" min="5" value="${b.tempo || (b.tipo === "instagram" ? 30 : 40)}">
+      <label class="chk"><input type="checkbox" id="iSetas" ${b.setas === false ? "" : "checked"}> Botões de seta</label>
+      <label class="chk"><input type="checkbox" id="iCont" ${b.contador === false ? "" : "checked"}> Contador (1/20)</label>
+      <label class="chk"><input type="checkbox" id="iIco" ${b.icone === false ? "" : "checked"}> Ícone ao lado</label>
+      <p class="hint">Se deixar o bloco mais alto que largo, a imagem vai para cima e o texto para baixo.</p></div>`;
+  }
+  h += `<div class="card"><h3>Vidro</h3>
+    <label class="chk"><input type="checkbox" id="gOn" ${vidroOn ? "checked" : ""}> Fundo de vidro</label>
+    <div id="gOpts" class="${vidroOn ? "" : "hidden"}">
+      <label>Tom</label><div class="seg" id="gTom"><button data-v="claro">Claro</button><button data-v="escuro">Escuro</button></div>
+      <label>Intensidade <span id="gIntV"></span></label><input type="range" id="gInt" min="0" max="250" value="${b.intensidade ?? 100}">
+      <label>Desfoque <span id="gDesV"></span></label><input type="range" id="gDes" min="0" max="60" value="${b.desfoque ?? 30}">
+    </div>
+    <label>Cantos arredondados <span id="gRaiV"></span></label><input type="range" id="gRai" min="0" max="${Math.max(60, Math.round(Math.min(b.w, b.h) / 2))}" value="${b.raio ?? raioDef}">
+    ${b.raio != null ? `<button class="small ghost" id="gRaiR" style="margin-top:6px">Cantos no padrão</button>` : ""}
+  </div>`;
+  box.innerHTML = h;
+
+  // posição
+  ["x","y","w","h"].forEach(c => $("i_" + c).oninput = e => { const v = Math.round(+e.target.value); if(isNaN(v)) return; b[c] = (c === "w" || c === "h") ? Math.max(40, v) : v; atualizaCaixa(b); mudou(); commitLogo(); });
+  box.querySelectorAll("[data-a]").forEach(bt => bt.onclick = () => {
+    const a = bt.dataset.a;
+    if(a === "cx"){ b.x = Math.round((W - b.w) / 2); }
+    else if(a === "cy"){ b.y = Math.round((Hh - b.h) / 2); }
+    else if(a === "frente" || a === "tras"){ return camada(b, a); }
+    else if(a === "+1" || a === "-1"){ return camada(b, +a); }
+    else if(a === "dup") return duplica(b);
+    else if(a === "del") return apaga(b);
+    else if(a === "oc"){ b.oculto = !b.oculto; commit(); return tudo(); }
+    atualizaCaixa(b); campos(b); mudou(); commit();
+  });
+  const liga = (id, fn, ev) => { const el = $(id); if(el) el[ev || "oninput"] = e => { fn(e.target); mudou(); commitLogo(); }; };
+  const seg = (id, val, fn) => { const s = $(id); if(!s) return; s.querySelectorAll("button").forEach(x => { x.classList.toggle("on", x.dataset.v === val); x.onclick = () => { fn(x.dataset.v); s.querySelectorAll("button").forEach(y => y.classList.toggle("on", y === x)); mudou(); commit(); }; }); };
+
+  if(b.tipo === "texto"){
+    $("iFonte").value = b.fonte || "sans";
+    liga("iTexto", t => { b.texto = t.value; const tg = $("ov").querySelector(`[data-id="${b.id}"] .tag`); if(tg) tg.textContent = rotulo(b); });
+    liga("iFonte", t => b.fonte = t.value, "onchange");
+    liga("iItal", t => b.italico = t.checked, "onchange");
+    liga("iMai", t => b.maiusculas = t.checked, "onchange");
+    liga("iCor", t => b.cor = t.value); liga("iDest", t => b.destaque = t.value);
+    seg("iAl", b.alinhar || "left", v => b.alinhar = v);
+    const tv = () => $("iTamV").textContent = b.tamanho > 0 ? b.tamanho + " px" : "automático";
+    tv(); liga("iTam", t => { b.tamanho = +t.value; tv(); });
+  }
+  if(b.tipo === "imagem"){
+    $("iTroca").onclick = () => pegaArquivo("image/*", async f => { b.url = await envio(f); commit(); tudo(); });
+    seg("iAj", b.ajuste || "contain", v => b.ajuste = v);
+  }
+  if(b.tipo === "clima"){
+    $("iCidB").onclick = async () => {
+      const q = $("iCid").value.trim(); if(!q) return; $("iCidM").textContent = "Buscando…";
+      try{
+        const r = await fetch("https://geocoding-api.open-meteo.com/v1/search?count=1&language=pt&name=" + encodeURIComponent(q)).then(r => r.json());
+        const g = r.results && r.results[0]; if(!g){ $("iCidM").textContent = "Cidade não encontrada."; return; }
+        b.cidade = { nome:g.name, lat:+g.latitude.toFixed(3), lon:+g.longitude.toFixed(3) };
+        $("iCid").value = g.name; $("iCidM").textContent = "Ok: " + g.name + (g.admin1 ? " – " + g.admin1 : "");
+        mudou(); commit();
+      }catch(e){ $("iCidM").textContent = "Não consegui buscar agora."; }
+    };
+  }
+  if(b.tipo === "hora") liga("iData", t => b.data = t.checked, "onchange");
+  if(b.tipo === "instagram" || b.tipo === "noticias"){
+    liga("iTempo", t => b.tempo = Math.max(5, +t.value || 30));
+    liga("iSetas", t => b.setas = t.checked, "onchange");
+    liga("iCont", t => b.contador = t.checked, "onchange");
+    liga("iIco", t => b.icone = t.checked, "onchange");
+  }
+  // vidro
+  liga("gOn", t => { b.vidro = t.checked; $("gOpts").classList.toggle("hidden", !t.checked); }, "onchange");
+  seg("gTom", b.tom || "claro", v => b.tom = v);
+  const rv = () => { $("gIntV").textContent = (b.intensidade ?? 100) + "%"; $("gDesV").textContent = (b.desfoque ?? 30) + "px"; $("gRaiV").textContent = (b.raio ?? raioDef) + "px"; };
+  rv();
+  liga("gInt", t => { b.intensidade = +t.value; rv(); });
+  liga("gDes", t => { b.desfoque = +t.value; rv(); });
+  liga("gRai", t => { b.raio = +t.value; rv(); });
+  if($("gRaiR")) $("gRaiR").onclick = () => { delete b.raio; mudou(); commit(); inspetor(); };
+}
+
+/* ---------------- Fundo ---------------- */
+function painelFundo(){
+  const f = L.fundo;
+  $("fTipo").querySelectorAll("button").forEach(x => {
+    x.classList.toggle("on", x.dataset.t === f.tipo);
+    x.onclick = () => {
+      f.tipo = x.dataset.t;
+      if((f.tipo === "imagem" || f.tipo === "video") && !f.url){ mudou(); painelFundo(); return $("fUp").click(); }
+      mudou(); commit(); painelFundo();
+    };
+  });
+  const arq = f.tipo === "imagem" || f.tipo === "video";
+  $("fArq").classList.toggle("hidden", !arq);
+  $("fCorBox").classList.toggle("hidden", f.tipo !== "cor");
+  $("fThumb").style.backgroundImage = f.tipo === "imagem" && f.url ? `url("${f.url}")` : "none";
+  $("fThumb").textContent = ""; $("fThumb").style.display = f.url ? "" : "none";
+  if(f.tipo === "video" && f.url){ $("fThumb").innerHTML = `<video src="${esc(f.url)}#t=1" muted style="width:100%;height:100%;object-fit:cover;border-radius:8px"></video>`; }
+  $("fUp").textContent = f.url ? "Trocar arquivo" : "Enviar arquivo";
+  $("fCor").value = f.cor || "#141414";
+  $("fDim").value = Math.round((f.escurecer || 0) * 100); $("fDimV").textContent = Math.round((f.escurecer || 0) * 100) + "%";
+  $("fBri").checked = f.brilhos !== false; $("fGra").checked = f.granulado !== false;
+}
+$("fUp").onclick = () => {
+  const f = L.fundo, vid = f.tipo === "video";
+  pegaArquivo(vid ? "video/mp4,video/*" : "image/*", async arq => {
+    if(arq.size > 50 * 1024 * 1024){ alert("Arquivo maior que 50 MB. Comprima antes (HandBrake ou CapCut)."); return; }
+    const p = $("fProg"); p.style.display = "block"; p.firstElementChild.style.width = "40%";
+    try{
+      const primeiro = !f.url;
+      f.url = await envio(arq);
+      if(primeiro){ f.brilhos = false; f.escurecer = Math.max(f.escurecer || 0, .2); }
+      p.firstElementChild.style.width = "100%";
+      commit(); tudo();
+    }catch(e){ alert("Erro ao enviar: " + e.message); }
+    setTimeout(() => p.style.display = "none", 800);
+  });
+};
+$("fCor").oninput = e => { L.fundo.cor = e.target.value; mudou(); commitLogo(); };
+$("fDim").oninput = e => { L.fundo.escurecer = +e.target.value / 100; $("fDimV").textContent = e.target.value + "%"; mudou(); commitLogo(); };
+$("fBri").onchange = e => { L.fundo.brilhos = e.target.checked; mudou(); commit(); };
+$("fGra").onchange = e => { L.fundo.granulado = e.target.checked; mudou(); commit(); };
+
+/* ---------------- Temas ---------------- */
+function listaTemas(){
+  const box = $("temas"); box.innerHTML = temas.length ? "" : '<div class="hint" style="margin:0 0 4px">Nenhum tema guardado ainda.</div>';
+  temas.forEach((t, i) => {
+    const d = document.createElement("div"); d.className = "tema";
+    d.innerHTML = `<span>${esc(t.nome)}</span><button class="small">Aplicar</button><button class="small ghost" title="Apagar">✕</button>`;
+    const [ap, del] = d.querySelectorAll("button");
+    ap.onclick = () => { L = clone(t.layout); selId = null; commit(); tudo(); $("msg").textContent = "Tema \"" + t.nome + "\" aplicado — toque em Salvar na TV"; };
+    del.onclick = async () => { if(!confirm("Apagar o tema \"" + t.nome + "\"?")) return; temas.splice(i, 1); await gravaTemas(); listaTemas(); };
+    box.appendChild(d);
+  });
+}
+async function gravaTemas(){
+  const { error } = await sb.from("layout").update({ temas }).eq("tela", TELA);
+  if(error) alert("Não consegui guardar: " + error.message);
+}
+$("tSalvar").onclick = async () => {
+  const nome = prompt("Nome do tema (ex.: Natal 2026):"); if(!nome) return;
+  const ex = temas.findIndex(t => t.nome.toLowerCase() === nome.trim().toLowerCase());
+  const t = { nome: nome.trim(), layout: clone(L), criado: new Date().toISOString() };
+  if(ex >= 0){ if(!confirm("Já existe um tema com esse nome. Substituir?")) return; temas[ex] = t; } else temas.push(t);
+  await gravaTemas(); listaTemas();
+};
+$("tPadrao").onclick = () => {
+  if(!confirm("Voltar ao layout padrão Magnus? (Dá para desfazer.)")) return;
+  L = clone(PADRAO); selId = null; commit(); tudo();
+};
+
+/* ---------------- Upload ---------------- */
+function pegaArquivo(accept, cb){ const f = $("file"); f.accept = accept; f.value = ""; f.onchange = () => f.files[0] && cb(f.files[0]).catch(e => alert("Erro: " + e.message)); f.click(); }
+async function envio(file){
+  let blob = file, ext = (file.name.split(".").pop() || "bin").toLowerCase().replace(/[^a-z0-9]/g, "");
+  if(/^image\/(jpeg|webp)$/.test(file.type) && file.size > 2 * 1024 * 1024){ blob = await reduz(file); ext = "jpg"; }
+  const path = "layout/" + Date.now() + "-" + Math.random().toString(36).slice(2, 7) + "." + ext;
+  $("msg").textContent = "Enviando arquivo…";
+  const { error } = await sb.storage.from("midia").upload(path, blob, { contentType: blob.type || file.type || undefined, cacheControl: "31536000" });
+  if(error) throw error;
+  estado();
+  return sb.storage.from("midia").getPublicUrl(path).data.publicUrl;
+}
+function reduz(file){                     // fotos grandes viram JPG de até 2560px (carrega mais rápido na TV)
+  return new Promise((ok, fail) => {
+    const im = new Image(), u = URL.createObjectURL(file);
+    im.onload = () => { const s = Math.min(1, 2560 / Math.max(im.width, im.height)), c = document.createElement("canvas");
+      c.width = Math.round(im.width * s); c.height = Math.round(im.height * s); c.getContext("2d").drawImage(im, 0, 0, c.width, c.height);
+      URL.revokeObjectURL(u); c.toBlob(b => b ? ok(b) : fail(new Error("imagem")), "image/jpeg", .88); };
+    im.onerror = () => fail(new Error("imagem ilegível")); im.src = u;
+  });
+}
+function proporcao(url){ return new Promise(ok => { const im = new Image(); im.onload = () => ok(im.width / im.height || 1); im.onerror = () => ok(1); im.src = url; }); }
+</script>
+</body>
+</html>
