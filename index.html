@@ -5,7 +5,8 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="robots" content="noindex">
 <title>Magnus TV · Painel</title>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <style>
   :root{
     --bg:#f6f4ef; --card:#fff; --ink:#16181c; --muted:#6b7078; --line:#e6e2d9;
@@ -62,6 +63,26 @@
   .login p{color:var(--muted)}
   .hint{font-size:13px;color:var(--muted);margin-top:6px}
   .switch{display:flex;align-items:center;gap:10px;margin-top:12px}
+
+  /* ---- Apresentações / controle ao vivo ---- */
+  .live{border-color:var(--accent);box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 25%,transparent)}
+  .live h2{color:var(--accent)}
+  .live h2::before{content:"";display:inline-block;width:9px;height:9px;border-radius:50%;background:#e5484d;margin-right:8px;vertical-align:1px;animation:pulse 1.4s infinite}
+  @keyframes pulse{50%{opacity:.3}}
+  .stage{display:grid;grid-template-columns:2fr 1fr;gap:10px;align-items:end}
+  .stage figure{margin:0}
+  .stage img{width:100%;aspect-ratio:16/9;object-fit:contain;background:#000;border-radius:10px;display:block}
+  .stage figcaption{font-size:12px;color:var(--muted);margin-top:4px}
+  .pad{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}
+  .pad button{padding:22px 10px;font-size:22px;border-radius:14px}
+  .pad .next{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+  .deck{display:flex;gap:12px;align-items:center;border:1px solid var(--line);border-radius:12px;padding:10px;margin-bottom:10px;background:var(--bg)}
+  .deck img{width:96px;aspect-ratio:16/9;object-fit:cover;border-radius:6px;background:#000;flex:none}
+  .deck .body{flex:1;min-width:0}
+  .deck .ctl{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}
+  .strip{display:flex;gap:6px;overflow-x:auto;margin-top:10px;padding-bottom:4px}
+  .strip img{height:52px;aspect-ratio:16/9;object-fit:cover;border-radius:5px;cursor:pointer;opacity:.55;border:2px solid transparent}
+  .strip img.cur{opacity:1;border-color:var(--accent)}
   .hidden{display:none!important}
 </style>
 </head>
@@ -84,8 +105,30 @@
       <div class="who"><span id="whoEmail"></span><button class="small ghost" id="btnSair">Sair</button></div>
     </header>
 
+
+    <section id="secLive" class="live hidden">
+      <h2>Ao vivo na TV</h2>
+      <div style="font-weight:600;margin-bottom:8px" id="liveTitle"></div>
+      <div class="stage">
+        <figure><img id="liveNow" alt=""><figcaption id="liveCount"></figcaption></figure>
+        <figure><img id="liveNext" alt=""><figcaption>Próximo</figcaption></figure>
+      </div>
+      <div class="pad"><button id="btnPrev">◀ Voltar</button><button id="btnNext" class="next">Avançar ▶</button></div>
+      <div class="strip" id="liveStrip"></div>
+      <div style="margin-top:12px"><button id="btnMural" class="ghost" style="width:100%">⏹ Encerrar e voltar ao mural</button></div>
+    </section>
+
     <section>
-      <h2>O que passa na TV</h2>
+      <h2>Apresentações</h2>
+      <div id="decks"></div>
+      <button id="btnPdf" style="width:100%">＋ Subir apresentação (PDF)</button>
+      <p class="hint">Exporte do PowerPoint, Keynote, Canva ou Google Slides como <b>PDF</b>. Cada página vira um slide na TV.</p>
+      <div class="progress" id="pdfProg"><div></div></div>
+      <p class="hint" id="pdfMsg"></p>
+    </section>
+
+    <section>
+      <h2>Mural (quando não tem apresentação)</h2>
       <div id="lista"></div>
       <div class="adds">
         <button id="addVideo">＋ Vídeo</button>
@@ -167,7 +210,7 @@ async function start(session){
   if(error){ $("saveMsg").textContent = "Erro ao carregar: " + error.message; return; }
   cfg = (data && data.config) || { marca:"MAGNUS", itens:[], recados:[], mostrarBarra:true };
   cfg.itens = cfg.itens || []; cfg.recados = cfg.recados || [];
-  fillForm(); render();
+  fillForm(); render(); startLive();
 }
 
 // ---------------- Formulário ----------------
@@ -334,6 +377,132 @@ async function upload(file, showProg){
   if(showProg) $("prog").firstElementChild.style.width = "100%";
   if(error) throw error;
   return sb.storage.from("midia").getPublicUrl(path).data.publicUrl;
+}
+
+
+// ================= Apresentações =================
+let decks = [], ctl = null;
+async function loadDecks(){
+  const { data } = await sb.from("apresentacoes").select("id,titulo,slides,thumbs,criado_por,criado_em").order("criado_em", { ascending:false });
+  decks = data || []; renderDecks(); renderLive();
+}
+function renderDecks(){
+  const box = $("decks"); box.innerHTML = "";
+  if(!decks.length){ box.innerHTML = '<div class="empty">Nenhuma apresentação ainda.</div>'; return; }
+  decks.forEach(d => {
+    const row = document.createElement("div"); row.className = "deck";
+    const im = document.createElement("img"); im.src = (d.thumbs && d.thumbs[0]) || (d.slides && d.slides[0]) || ""; row.appendChild(im);
+    const b = document.createElement("div"); b.className = "body";
+    const t = document.createElement("div"); t.className = "t"; t.style.fontWeight = 600; t.textContent = d.titulo;
+    const sm = document.createElement("div"); sm.className = "s"; sm.style.fontSize = "13px"; sm.style.color = "var(--muted)";
+    sm.textContent = (d.slides || []).length + " slides · " + (d.criado_por || "").split("@")[0];
+    const c = document.createElement("div"); c.className = "ctl";
+    const live = ctl && ctl.modo === "apresentacao" && ctl.apresentacao_id === d.id;
+    const go = document.createElement("button"); go.className = "small" + (live ? "" : " primary");
+    go.textContent = live ? "● Na TV agora" : "▶ Colocar na TV"; go.disabled = live;
+    go.onclick = () => setLive(d.id, 0);
+    const del = document.createElement("button"); del.className = "small ghost"; del.textContent = "Apagar";
+    del.onclick = async () => { if(!confirm("Apagar \"" + d.titulo + "\"?")) return;
+      if(live) await toMural();
+      await sb.from("apresentacoes").delete().eq("id", d.id); loadDecks(); };
+    c.append(go, del); b.append(t, sm, c); row.appendChild(b); box.appendChild(row);
+  });
+}
+async function setLive(id, slide){
+  const { error } = await sb.from("controle").upsert({ tela: TELA, modo: "apresentacao", apresentacao_id: id, slide: slide || 0, atualizado: new Date().toISOString() });
+  if(error) alert("Não consegui mandar pra TV: " + error.message); else loadCtl();
+}
+async function toMural(){
+  await sb.from("controle").upsert({ tela: TELA, modo: "mural", apresentacao_id: null, slide: 0, atualizado: new Date().toISOString() });
+  loadCtl();
+}
+async function step(delta){
+  if(!ctl || ctl.modo !== "apresentacao") return;
+  const d = decks.find(x => x.id === ctl.apresentacao_id); if(!d) return;
+  const n = Math.max(0, Math.min(d.slides.length - 1, (ctl.slide || 0) + delta));
+  if(n === ctl.slide) return;
+  ctl.slide = n; renderLive();                                  // resposta imediata
+  await sb.from("controle").update({ slide: n, atualizado: new Date().toISOString() }).eq("tela", TELA);
+}
+async function loadCtl(){
+  const { data } = await sb.from("controle").select("*").eq("tela", TELA).maybeSingle();
+  ctl = data; renderLive(); renderDecks();
+}
+function renderLive(){
+  const sec = $("secLive");
+  const d = ctl && ctl.modo === "apresentacao" && decks.find(x => x.id === ctl.apresentacao_id);
+  if(!d){ sec.classList.add("hidden"); return; }
+  sec.classList.remove("hidden");
+  const n = Math.max(0, Math.min(d.slides.length - 1, ctl.slide || 0));
+  const th = d.thumbs && d.thumbs.length ? d.thumbs : d.slides;
+  $("liveTitle").textContent = d.titulo;
+  $("liveNow").src = d.slides[n];
+  $("liveNext").src = th[n + 1] || "";
+  $("liveNext").style.visibility = th[n + 1] ? "visible" : "hidden";
+  $("liveCount").textContent = "Slide " + (n + 1) + " de " + d.slides.length;
+  $("btnPrev").disabled = n === 0; $("btnNext").disabled = n >= d.slides.length - 1;
+  const st = $("liveStrip");
+  if(st.getAttribute("data-id") !== d.id){
+    st.setAttribute("data-id", d.id); st.innerHTML = "";
+    th.forEach((u, i) => { const im = document.createElement("img"); im.src = u; im.onclick = () => { ctl.slide = i; renderLive();
+      sb.from("controle").update({ slide: i, atualizado: new Date().toISOString() }).eq("tela", TELA); }; st.appendChild(im); });
+  }
+  [...st.children].forEach((im, i) => im.classList.toggle("cur", i === n));
+  const cur = st.children[n]; if(cur) cur.scrollIntoView({ block:"nearest", inline:"center", behavior:"smooth" });
+}
+$("btnPrev").onclick = () => step(-1);
+$("btnNext").onclick = () => step(1);
+$("btnMural").onclick = toMural;
+document.addEventListener("keydown", e => {
+  if(e.target.matches && e.target.matches("input,textarea")) return;
+  if(e.key === "ArrowRight" || e.key === " ") { step(1); e.preventDefault(); }
+  if(e.key === "ArrowLeft") { step(-1); e.preventDefault(); }
+});
+
+// Subir PDF: cada página vira uma imagem 1920px (TV) + miniatura
+$("btnPdf").onclick = () => pickFile("application/pdf", async f => {
+  const msg = $("pdfMsg"), bar = $("pdfProg"), fill = bar.firstElementChild;
+  const titulo = prompt("Nome da apresentação:", f.name.replace(/\.pdf$/i, "")) || f.name;
+  try{
+    pdfjsLib.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
+    bar.style.display = "block"; fill.style.width = "2%"; msg.textContent = "Lendo o PDF…";
+    const pdf = await pdfjsLib.getDocument({ data: await f.arrayBuffer() }).promise;
+    const id = crypto.randomUUID(), slides = [], thumbs = [];
+    for(let i = 1; i <= pdf.numPages; i++){
+      msg.textContent = "Preparando slide " + i + " de " + pdf.numPages + "…";
+      const page = await pdf.getPage(i);
+      const v1 = page.getViewport({ scale: 1 });
+      const scale = Math.min(1920 / v1.width, 1080 / v1.height) * 1.0;
+      const big = await render(page, scale), small = await render(page, scale * 0.25);
+      slides.push(await upBlob(big, `apresentacoes/${id}/${i}.jpg`));
+      thumbs.push(await upBlob(small, `apresentacoes/${id}/t${i}.jpg`));
+      fill.style.width = Math.round(i / pdf.numPages * 100) + "%";
+    }
+    const { error } = await sb.from("apresentacoes").insert({ id, titulo, slides, thumbs });
+    if(error) throw error;
+    msg.textContent = "Pronto! " + pdf.numPages + " slides. Toque em ▶ Colocar na TV.";
+    loadDecks();
+  }catch(e){ msg.textContent = "Erro: " + (e.message || e); }
+  setTimeout(() => { bar.style.display = "none"; }, 1500);
+});
+async function render(page, scale){
+  const vp = page.getViewport({ scale });
+  const c = document.createElement("canvas"); c.width = Math.round(vp.width); c.height = Math.round(vp.height);
+  const ctx = c.getContext("2d"); ctx.fillStyle = "#fff"; ctx.fillRect(0, 0, c.width, c.height);
+  await page.render({ canvasContext: ctx, viewport: vp }).promise;
+  return await new Promise(r => c.toBlob(r, "image/jpeg", 0.86));
+}
+async function upBlob(blob, path){
+  const { error } = await sb.storage.from("midia").upload(path, blob, { contentType: "image/jpeg", cacheControl: "31536000", upsert: false });
+  if(error) throw error;
+  return sb.storage.from("midia").getPublicUrl(path).data.publicUrl;
+}
+function startLive(){
+  loadDecks(); loadCtl();
+  sb.channel("painel-ctl").on("postgres_changes", { event: "*", schema: "public", table: "controle", filter: "tela=eq." + TELA },
+    p => { if(p.new){ ctl = p.new; renderLive(); renderDecks(); } }).subscribe();
+  sb.channel("painel-decks").on("postgres_changes", { event: "*", schema: "public", table: "apresentacoes" }, () => loadDecks()).subscribe();
+  setInterval(loadCtl, 8000);
 }
 
 // ---------------- Salvar ----------------
