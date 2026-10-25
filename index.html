@@ -82,6 +82,11 @@
   .deck .ctl{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}
   .strip{display:flex;gap:6px;overflow-x:auto;margin-top:10px;padding-bottom:4px}
   .strip img{height:52px;aspect-ratio:16/9;object-fit:cover;border-radius:5px;cursor:pointer;opacity:.55;border:2px solid transparent}
+  .strip .vid{position:relative;display:inline-block;flex:none}
+  .strip .vid::after{content:"▶";position:absolute;inset:0;display:grid;place-items:center;color:#fff;font-size:16px;text-shadow:0 1px 4px #000;pointer-events:none}
+  .vlist{margin-top:10px}
+  .vlist .row{display:flex;align-items:center;gap:8px;font-size:14px;padding:6px 0;border-top:1px solid var(--line)}
+  .vlist .row span{flex:1}
   .strip img.cur{opacity:1;border-color:var(--accent)}
   .hidden{display:none!important}
 </style>
@@ -114,6 +119,7 @@
         <figure><img id="liveNext" alt=""><figcaption>Próximo</figcaption></figure>
       </div>
       <div class="pad"><button id="btnPrev">◀ Voltar</button><button id="btnNext" class="next">Avançar ▶</button></div>
+      <button id="btnPlay" class="hidden" style="width:100%;margin-top:10px;padding:16px;font-size:18px">⏸ Pausar vídeo</button>
       <div class="strip" id="liveStrip"></div>
       <div style="margin-top:12px"><button id="btnMural" class="ghost" style="width:100%">⏹ Encerrar e voltar ao mural</button></div>
     </section>
@@ -300,7 +306,7 @@ function openDialog(title, html, okText, onOk){
     if(ev.submitter && ev.submitter.value === "cancel") return;
     ev.preventDefault();
     $("dlgOk").disabled = true;
-    try{ const ok = await onOk(); if(ok !== false){ d.close(); render(); touch(); } }
+    try{ const ok = await onOk(); if(ok === "skip") d.close(); else if(ok !== false){ d.close(); render(); touch(); } }
     catch(e){ alertIn("Erro: " + e.message); }
     $("dlgOk").disabled = false;
   };
@@ -381,6 +387,9 @@ async function upload(file, showProg){
 
 
 // ================= Apresentações =================
+// Cada item de "slides" é a URL de uma imagem ou {v: URL do vídeo} (vídeo inserido entre slides)
+const isVid = it => it && typeof it === "object" && it.v;
+const thumbOf = (d, i) => (d.thumbs && d.thumbs[i]) || (isVid(d.slides[i]) ? (d.slides[i].p || "") : d.slides[i]);
 let decks = [], ctl = null;
 async function loadDecks(){
   const { data } = await sb.from("apresentacoes").select("id,titulo,slides,thumbs,criado_por,criado_em").order("criado_em", { ascending:false });
@@ -391,11 +400,12 @@ function renderDecks(){
   if(!decks.length){ box.innerHTML = '<div class="empty">Nenhuma apresentação ainda.</div>'; return; }
   decks.forEach(d => {
     const row = document.createElement("div"); row.className = "deck";
-    const im = document.createElement("img"); im.src = (d.thumbs && d.thumbs[0]) || (d.slides && d.slides[0]) || ""; row.appendChild(im);
+    const im = document.createElement("img"); im.src = thumbOf(d, 0) || ""; row.appendChild(im);
     const b = document.createElement("div"); b.className = "body";
     const t = document.createElement("div"); t.className = "t"; t.style.fontWeight = 600; t.textContent = d.titulo;
     const sm = document.createElement("div"); sm.className = "s"; sm.style.fontSize = "13px"; sm.style.color = "var(--muted)";
-    sm.textContent = (d.slides || []).length + " slides · " + (d.criado_por || "").split("@")[0];
+    const nv = (d.slides || []).filter(isVid).length;
+    sm.textContent = (d.slides || []).length - nv + " slides" + (nv ? " + " + nv + " vídeo" + (nv > 1 ? "s" : "") : "") + " · " + (d.criado_por || "").split("@")[0];
     const c = document.createElement("div"); c.className = "ctl";
     const live = ctl && ctl.modo === "apresentacao" && ctl.apresentacao_id === d.id;
     const go = document.createElement("button"); go.className = "small" + (live ? "" : " primary");
@@ -405,11 +415,13 @@ function renderDecks(){
     del.onclick = async () => { if(!confirm("Apagar \"" + d.titulo + "\"?")) return;
       if(live) await toMural();
       await sb.from("apresentacoes").delete().eq("id", d.id); loadDecks(); };
-    c.append(go, del); b.append(t, sm, c); row.appendChild(b); box.appendChild(row);
+    const vb = document.createElement("button"); vb.className = "small"; vb.textContent = "＋ Vídeo";
+    vb.onclick = () => videoDialog(d);
+    c.append(go, vb, del); b.append(t, sm, c); row.appendChild(b); box.appendChild(row);
   });
 }
 async function setLive(id, slide){
-  const { error } = await sb.from("controle").upsert({ tela: TELA, modo: "apresentacao", apresentacao_id: id, slide: slide || 0, atualizado: new Date().toISOString() });
+  const { error } = await sb.from("controle").upsert({ tela: TELA, modo: "apresentacao", apresentacao_id: id, slide: slide || 0, pausado: false, atualizado: new Date().toISOString() });
   if(error) alert("Não consegui mandar pra TV: " + error.message); else loadCtl();
 }
 async function toMural(){
@@ -421,8 +433,8 @@ async function step(delta){
   const d = decks.find(x => x.id === ctl.apresentacao_id); if(!d) return;
   const n = Math.max(0, Math.min(d.slides.length - 1, (ctl.slide || 0) + delta));
   if(n === ctl.slide) return;
-  ctl.slide = n; renderLive();                                  // resposta imediata
-  await sb.from("controle").update({ slide: n, atualizado: new Date().toISOString() }).eq("tela", TELA);
+  ctl.slide = n; ctl.pausado = false; renderLive();             // resposta imediata
+  await sb.from("controle").update({ slide: n, pausado: false, atualizado: new Date().toISOString() }).eq("tela", TELA);
 }
 async function loadCtl(){
   const { data } = await sb.from("controle").select("*").eq("tela", TELA).maybeSingle();
@@ -434,25 +446,33 @@ function renderLive(){
   if(!d){ sec.classList.add("hidden"); return; }
   sec.classList.remove("hidden");
   const n = Math.max(0, Math.min(d.slides.length - 1, ctl.slide || 0));
-  const th = d.thumbs && d.thumbs.length ? d.thumbs : d.slides;
+  const th = d.slides.map((_, i) => thumbOf(d, i));
+  const vid = isVid(d.slides[n]);
   $("liveTitle").textContent = d.titulo;
-  $("liveNow").src = d.slides[n];
+  $("liveNow").src = vid ? th[n] : d.slides[n];
   $("liveNext").src = th[n + 1] || "";
   $("liveNext").style.visibility = th[n + 1] ? "visible" : "hidden";
-  $("liveCount").textContent = "Slide " + (n + 1) + " de " + d.slides.length;
+  $("liveCount").textContent = (vid ? "🎬 Vídeo · " : "") + "Item " + (n + 1) + " de " + d.slides.length;
+  $("btnPlay").classList.toggle("hidden", !vid);
+  $("btnPlay").textContent = ctl.pausado ? "▶ Continuar vídeo" : "⏸ Pausar vídeo";
   $("btnPrev").disabled = n === 0; $("btnNext").disabled = n >= d.slides.length - 1;
   const st = $("liveStrip");
   if(st.getAttribute("data-id") !== d.id){
     st.setAttribute("data-id", d.id); st.innerHTML = "";
-    th.forEach((u, i) => { const im = document.createElement("img"); im.src = u; im.onclick = () => { ctl.slide = i; renderLive();
-      sb.from("controle").update({ slide: i, atualizado: new Date().toISOString() }).eq("tela", TELA); }; st.appendChild(im); });
+    th.forEach((u, i) => { const im = document.createElement("img"); im.src = u; im.onclick = () => { ctl.slide = i; ctl.pausado = false; renderLive();
+      sb.from("controle").update({ slide: i, pausado: false, atualizado: new Date().toISOString() }).eq("tela", TELA); };
+      if(isVid(d.slides[i])){ const w = document.createElement("span"); w.className = "vid"; w.appendChild(im); st.appendChild(w); } else st.appendChild(im); });
   }
-  [...st.children].forEach((im, i) => im.classList.toggle("cur", i === n));
+  [...st.children].forEach((el, i) => (el.tagName === "IMG" ? el : el.firstChild).classList.toggle("cur", i === n));
   const cur = st.children[n]; if(cur) cur.scrollIntoView({ block:"nearest", inline:"center", behavior:"smooth" });
 }
 $("btnPrev").onclick = () => step(-1);
 $("btnNext").onclick = () => step(1);
 $("btnMural").onclick = toMural;
+$("btnPlay").onclick = async () => {
+  if(!ctl) return; ctl.pausado = !ctl.pausado; renderLive();
+  await sb.from("controle").update({ pausado: ctl.pausado, atualizado: new Date().toISOString() }).eq("tela", TELA);
+};
 document.addEventListener("keydown", e => {
   if(e.target.matches && e.target.matches("input,textarea")) return;
   if(e.key === "ArrowRight" || e.key === " ") { step(1); e.preventDefault(); }
@@ -485,6 +505,64 @@ $("btnPdf").onclick = () => pickFile("application/pdf", async f => {
   }catch(e){ msg.textContent = "Erro: " + (e.message || e); }
   setTimeout(() => { bar.style.display = "none"; }, 1500);
 });
+// ---- Inserir vídeo entre slides ----
+function videoDialog(d){
+  const n = (d.slides || []).length;
+  let opts = '<option value="0">Antes do 1º item (abre com o vídeo)</option>';
+  for(let i = 1; i <= n; i++) opts += `<option value="${i}" ${i === n ? "selected" : ""}>Depois do item ${i}${isVid(d.slides[i-1]) ? " (vídeo)" : ""}</option>`;
+  const vids = (d.slides || []).map((it, i) => isVid(it) ? i : -1).filter(i => i >= 0);
+  const list = vids.length ? '<div class="vlist"><b style="font-size:13px">Vídeos nesta apresentação</b>' +
+    vids.map(i => `<div class="row"><span>🎬 Item ${i + 1}</span><button type="button" class="small ghost" data-rm="${i}">Remover</button></div>`).join("") + "</div>" : "";
+  openDialog("Inserir vídeo · " + d.titulo,
+    `<label>Vídeo (MP4, até 50 MB)</label><input type="file" id="fVid" accept="video/mp4,video/*">
+     <label for="fPos">Onde ele entra</label><select id="fPos">${opts}</select>
+     <p class="hint">Na TV o vídeo toca em tela cheia; você avança pelo celular igual a um slide e pode pausar.</p>${list}`,
+    "Inserir", async () => {
+      const f = $("fVid").files[0]; if(!f){ alertIn("Escolha um vídeo."); return false; }
+      if(f.size > 50*1024*1024){ alertIn("Vídeo maior que 50 MB. Comprima antes (HandBrake, CapCut ou exporte em 1080p)."); return false; }
+      const pos = +$("fPos").value, stamp = Date.now();
+      $("prog").style.display = "block"; $("prog").firstElementChild.style.width = "10%";
+      const poster = await videoPoster(f).catch(() => null);
+      const ext = (f.name.split(".").pop() || "mp4").toLowerCase().replace(/[^a-z0-9]/g, "") || "mp4";
+      const path = `apresentacoes/${d.id}/v${stamp}.${ext}`;
+      $("prog").firstElementChild.style.width = "30%";
+      const { error } = await sb.storage.from("midia").upload(path, f, { contentType: f.type || "video/mp4", cacheControl: "31536000" });
+      if(error) throw error;
+      const url = sb.storage.from("midia").getPublicUrl(path).data.publicUrl;
+      const purl = poster ? await upBlob(poster, `apresentacoes/${d.id}/v${stamp}.jpg`) : "";
+      $("prog").firstElementChild.style.width = "100%";
+      const slides = [...d.slides], thumbs = d.slides.map((_, i) => thumbOf(d, i));
+      slides.splice(pos, 0, { v: url, p: purl }); thumbs.splice(pos, 0, purl);
+      const r = await sb.from("apresentacoes").update({ slides, thumbs }).eq("id", d.id);
+      if(r.error) throw r.error;
+      await loadDecks(); return "skip";
+    });
+  $("dlgBody").querySelectorAll("[data-rm]").forEach(b => b.onclick = async () => {
+    const i = +b.getAttribute("data-rm");
+    const slides = [...d.slides], thumbs = d.slides.map((_, k) => thumbOf(d, k));
+    slides.splice(i, 1); thumbs.splice(i, 1);
+    const r = await sb.from("apresentacoes").update({ slides, thumbs }).eq("id", d.id);
+    if(r.error){ alertIn("Erro: " + r.error.message); return; }
+    if(ctl && ctl.apresentacao_id === d.id && ctl.slide >= slides.length)
+      await sb.from("controle").update({ slide: Math.max(0, slides.length - 1), atualizado: new Date().toISOString() }).eq("tela", TELA);
+    $("dlg").close(); await loadDecks();
+  });
+}
+function videoPoster(file){                      // tira uma "foto" do vídeo para servir de miniatura
+  return new Promise((ok, fail) => {
+    const v = document.createElement("video"); v.muted = true; v.playsInline = true; v.preload = "auto";
+    const u = URL.createObjectURL(file); v.src = u;
+    const t = setTimeout(() => fail(new Error("timeout")), 15000);
+    v.onloadeddata = () => { v.currentTime = Math.min(1, (v.duration || 2) / 2); };
+    v.onseeked = () => {
+      const w = 480, h = Math.round(w * (v.videoHeight || 270) / (v.videoWidth || 480));
+      const c = document.createElement("canvas"); c.width = w; c.height = h;
+      c.getContext("2d").drawImage(v, 0, 0, w, h);
+      clearTimeout(t); URL.revokeObjectURL(u); c.toBlob(b => b ? ok(b) : fail(new Error("sem imagem")), "image/jpeg", 0.8);
+    };
+    v.onerror = () => { clearTimeout(t); fail(new Error("vídeo ilegível")); };
+  });
+}
 async function renderPage(page, scale){
   const vp = page.getViewport({ scale });
   const c = document.createElement("canvas"); c.width = Math.round(vp.width); c.height = Math.round(vp.height);
