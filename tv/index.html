@@ -91,6 +91,24 @@ body{background:#0b0b0b;color:var(--fg);font-family:var(--sans);overflow:hidden}
 .f-sans{font-family:var(--sans);font-weight:500;line-height:1.25}
 .f-sansb{font-family:var(--sans);font-weight:700;line-height:1.15}
 .img{position:absolute;width:auto;height:auto;display:block}
+/* spotify: tocando agora */
+.spo{display:flex;align-items:center;transition:opacity .6s}
+.spo.vazio{opacity:0}
+.spo .capa{flex:none;overflow:hidden;background:rgba(255,255,255,.06);box-shadow:0 .6em 1.6em rgba(0,0,0,.45)}
+.spo .capa img{width:100%;height:100%;object-fit:cover;display:block}
+.spo .info{flex:1;min-width:0;display:flex;flex-direction:column;gap:.35em}
+.spo .k{display:flex;align-items:center;gap:.6em}
+.spo .t{font:400 2.1em/1.05 var(--cond);text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.spo .a{font:italic 1.25em/1.2 var(--serif);color:var(--soft);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.spo .bar{height:3px;border-radius:3px;background:rgba(255,255,255,.15);overflow:hidden;margin-top:.5em}
+.spo .bar i{display:block;height:100%;width:0;background:var(--or)}
+.spo.vert{flex-direction:column;align-items:stretch;text-align:center}
+.spo.vert .k{justify-content:center}
+.eq{display:inline-flex;align-items:flex-end;gap:2px;height:.9em}
+.eq i{width:3px;background:var(--or);border-radius:1px;animation:eq 1s ease-in-out infinite}
+.eq i:nth-child(2){animation-delay:-.3s}.eq i:nth-child(3){animation-delay:-.6s}.eq i:nth-child(4){animation-delay:-.15s}
+@keyframes eq{0%,100%{height:25%}50%{height:100%}}
+.spo.pausa .eq i{animation:none;height:25%}
 .hidden{display:none!important}
 
 /* ---------- modo apresentação ---------- */
@@ -177,7 +195,10 @@ const TPL={
     <span class="t" id="wxT">--°</span><span class="d"><b id="wxC">Clima</b><span id="wxD">Previsão do tempo</span></span></div>`,
   hora:`<div class="box pil hor"><span class="h" id="hora">--:--</span><span class="d"><b id="dia"></b><span id="data"></span></span></div>`,
   texto:`<div class="box"><div class="txt"><span class="in"></span></div></div>`,
-  imagem:`<div class="box"><img class="img" alt=""></div>`
+  imagem:`<div class="box"><img class="img" alt=""></div>`,
+  spotify:`<div class="box spo vazio"><div class="capa"><img id="spCapa" alt=""></div><div class="info">
+    <span class="k"><span class="eq"><i></i><i></i><i></i><i></i></span><span id="spK">Tocando agora</span></span>
+    <span class="t" id="spT"></span><span class="a" id="spA"></span><div class="bar"><i id="spBar"></i></div></div></div>`
 };
 
 function aplicaLayout(lay){
@@ -196,6 +217,7 @@ function aplicaLayout(lay){
   if(novos.includes("instagram")){ativo="A";if(posts.length)mostrarPost()}
   if(novos.includes("noticias")&&nots.length)mostrarNoticia();
   if(novos.includes("hora"))relogio();
+  if(novos.includes("spotify"))buscaSpotify();
   const c=blocoDo("clima");const k=c?JSON.stringify(c.cidade||null):"";
   if(c&&(novos.includes("clima")||k!==cidadeKey)){cidadeKey=k;clima()}
   try{if(!PREVIEW)localStorage.setItem("tvLayout",JSON.stringify(L))}catch(e){}
@@ -233,6 +255,7 @@ function posiciona(el,b){
   else if(b.tipo==="clima"||b.tipo==="hora")pilula(el,box,b);
   else if(b.tipo==="texto")texto(el,box,b);
   else if(b.tipo==="imagem")imagem(el,box,b);
+  else if(b.tipo==="spotify")spotifyBloco(el,box,b);
 }
 
 function painel(el,box,b){
@@ -295,6 +318,45 @@ function imagem(el,box,b){
   if(!b.url)img.removeAttribute("src");
 }
 function on0(b){return (b.vidro?40:0)}
+function spotifyBloco(el,box,b){
+  const vert=b.w<b.h*1.1;
+  const s=Math.max(.4,Math.min(3,vert?b.w/340:b.h/160));
+  el.style.fontSize=20*s+"px";
+  vidro(box,b,Math.min(40,b.h/2),true);
+  const p=Math.min(b.w,b.h)*(vert?.08:.14);
+  box.style.padding=p+"px";box.style.gap=(vert?14:24)*s+"px";
+  box.classList.toggle("vert",vert);
+  const c=box.querySelector(".capa");
+  const lado=vert?Math.min(b.w-2*p,(b.h-2*p)*.62):b.h-2*p;
+  c.style.width=c.style.height=lado+"px";c.style.borderRadius=Math.min(18*s,lado/6)+"px";
+  if(vert)c.style.margin="0 auto";else c.style.margin="0";
+  pintaSpotify();
+}
+let sp={tocando:false},spT=0;
+async function buscaSpotify(){
+  if(!blocoDo("spotify"))return;
+  try{const r=await fetch(`${SUPA}/functions/v1/spotify`,{cache:"no-store"});if(r.ok){sp=await r.json();spT=Date.now();pintaSpotify()}}catch(e){}
+}
+function pintaSpotify(){
+  const b=blocoDo("spotify"),el=b&&els[b.id];if(!el)return;
+  const box=el.querySelector(".spo");
+  // no editor, sem música tocando, mostra um exemplo para dar para posicionar o bloco
+  const d=(PREVIEW&&!(sp&&sp.titulo&&sp.tocando))?{tocando:true,titulo:"Nome da música",artista:"Artista · exemplo no editor",capa:""}:sp;
+  const tem=!!(d&&d.titulo),esconde=b.esconder!==false;
+  box.classList.toggle("vazio",!tem||(esconde&&!d.tocando));
+  box.classList.toggle("pausa",!d.tocando);
+  if(!tem)return;
+  $("spK").textContent=d.tocando?"Tocando agora":"Pausado";
+  if($("spT").textContent!==d.titulo)$("spT").textContent=d.titulo;
+  $("spA").textContent=d.artista||"";
+  const im=$("spCapa");if(d.capa){if(im.getAttribute("src")!==d.capa)im.src=d.capa;im.style.visibility=""}else im.style.visibility="hidden";
+}
+setInterval(()=>{                       // barra de progresso andando entre uma consulta e outra
+  if(!sp||!sp.duracao||!$("spBar"))return;
+  const pr=Math.min(sp.duracao,(sp.progresso||0)+(sp.tocando?Date.now()-spT:0));
+  $("spBar").style.width=pr/sp.duracao*100+"%";
+},500);
+setInterval(buscaSpotify,5000);
 function relayout(){if(!L)return;L.blocos.forEach(b=>els[b.id]&&posiciona(els[b.id],b))}
 
 function liga(el,tipo){
