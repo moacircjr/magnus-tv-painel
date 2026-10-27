@@ -113,7 +113,8 @@ body{background:#0b0b0b;color:var(--fg);font-family:var(--sans);overflow:hidden}
 
 /* ---------- modo apresentação ---------- */
 #show{position:fixed;inset:0;z-index:50;background:#0b0b0b;opacity:0;pointer-events:none;transition:opacity .6s}
-#show.on{opacity:1;cursor:none}
+#show.on{opacity:1;pointer-events:auto}
+#teclas{position:fixed;left:10px;top:10px;z-index:99;max-width:60vw;padding:12px 16px;border-radius:12px;background:rgba(0,0,0,.85);color:#7CFC9A;font:600 22px/1.35 monospace;white-space:pre;pointer-events:none}
 #show .sl{position:absolute;inset:0;background:#0b0b0b center/contain no-repeat;opacity:0;transition:opacity .45s}
 #show .sl.on{opacity:1}
 #show video.sl{width:100%;height:100%;object-fit:contain;background:#000}
@@ -519,7 +520,8 @@ if(PREVIEW){
   // controle remoto / passador de slides: entende setas, OK, Page Up/Down (passadores USB) e canal +/- da Samsung
   const PROX=["ArrowRight","ArrowDown","PageDown","MediaTrackNext","MediaFastForward","ChannelDown"],ANT=["ArrowLeft","ArrowUp","PageUp","MediaTrackPrevious","MediaRewind","ChannelUp"];
   const PROXc=[39,40,34,428,417,10233],ANTc=[37,38,33,427,412,10232];
-  window.addEventListener("keydown",e=>{
+  let ultTecla=0;
+  function tecla(e){
     const k=e.key,c=e.keyCode,prox=PROX.includes(k)||PROXc.includes(c),ant=ANT.includes(k)||ANTc.includes(c),ok=k==="Enter"||c===13;
     if(ctl.modo==="apresentacao"&&deck){
       if(prox||ant||ok||k===" ")e.preventDefault();
@@ -531,7 +533,28 @@ if(PREVIEW){
     if(k==="ArrowRight")passaPost(1);if(k==="ArrowLeft")passaPost(-1);
     if(k==="ArrowDown")passaNot(1);if(k==="ArrowUp")passaNot(-1);
     if(k==="f"||k==="F")document.documentElement.requestFullscreen?.().catch(()=>{});
-  },true);
+  }
+  window.addEventListener("keydown",e=>{ultTecla=Date.now();tecla(e)},true);
+  window.addEventListener("keyup",e=>{if(Date.now()-ultTecla>400)tecla(e)},true);   // TVs que só mandam keyup
+  // controle em modo "ponteiro" (navegador da Samsung): OK clica -> metade direita avança, esquerda volta;
+  // rolar para baixo/cima (setas que viram rolagem) também passa o slide
+  $("show").addEventListener("click",e=>{if(ctl.modo!=="apresentacao"||!deck)return;
+    const v=[...document.querySelectorAll("#show video.sl")].pop();
+    if(v&&v.muted){v.muted=false;$("somHint").className="";return}
+    passaSlide(e.clientX>innerWidth/2?1:-1)});
+  let rolT=0;
+  window.addEventListener("wheel",e=>{if(ctl.modo!=="apresentacao"||!deck)return;e.preventDefault();
+    const d=Math.abs(e.deltaY)>=Math.abs(e.deltaX)?e.deltaY:e.deltaX;if(!d||Date.now()-rolT<700)return;rolT=Date.now();passaSlide(d>0?1:-1)},{passive:false});
+  // diagnóstico: abra /tv/?teclas=1 para ver na tela o que o controle manda
+  if(/[?&]teclas=1/.test(location.search)){
+    const box=document.createElement("div");box.id="teclas";box.textContent="Aperte botões do controle…";document.body.appendChild(box);
+    const log=[];const add=t=>{log.unshift(new Date().toLocaleTimeString("pt-BR")+"  "+t);log.length=14;box.textContent=log.join("\n")};
+    ["keydown","keyup"].forEach(n=>window.addEventListener(n,e=>add(n+"  key="+e.key+"  code="+e.code+"  keyCode="+e.keyCode),true));
+    window.addEventListener("click",e=>add("click  x="+Math.round(e.clientX)+" y="+Math.round(e.clientY)),true);
+    window.addEventListener("wheel",e=>add("wheel  dx="+Math.round(e.deltaX)+" dy="+Math.round(e.deltaY)),true);
+    window.addEventListener("pointermove",(()=>{let t=0;return e=>{if(Date.now()-t>800){t=Date.now();add("pointermove "+Math.round(e.clientX)+","+Math.round(e.clientY))}}})(),true);
+    add("UA: "+navigator.userAgent.slice(0,90));
+  }
   // pede ao Tizen para entregar as teclas de mídia/canal à página (ignorado em outros navegadores)
   try{const t=window.tizen;if(t&&t.tvinputdevice)["MediaPlayPause","MediaFastForward","MediaRewind","ChannelUp","ChannelDown"].forEach(n=>{try{t.tvinputdevice.registerKey(n)}catch(_){}})}catch(_){}
   document.addEventListener("dblclick",()=>document.documentElement.requestFullscreen?.().catch(()=>{}));
