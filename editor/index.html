@@ -110,8 +110,8 @@ header .sp{flex:1}
 
 <div id="vApp" class="hidden">
 <header>
-  <a href="../">← Painel</a>
-  <h1>Layout da <b>TV</b></h1>
+  <a href="../" id="lnkVolta">← Painel</a>
+  <h1>Layout da <b>TV</b> <span id="nomeTela" style="font-weight:500;color:var(--muted)"></span></h1>
   <button class="small" id="bUndo" title="Desfazer (Ctrl+Z)">↶ Desfazer</button>
   <button class="small" id="bRedo" title="Refazer (Ctrl+Shift+Z)">↷ Refazer</button>
   <span class="sp"></span>
@@ -182,7 +182,8 @@ header .sp{flex:1}
 <script>
 const SUPABASE_URL = "https://ocqgortpqhkgxlxvphkx.supabase.co";
 const SUPABASE_KEY = "sb_publishable_q6xrUBBo9rZeoiBmKnHhPQ_RHECq_6z";
-const TELA = "principal";
+const TELA = (new URLSearchParams(location.search).get("tela") || "principal").replace(/[^a-z0-9_-]/gi, "");
+const NOMES_TELA = { principal:"Recepção", reuniao:"Sala de reunião" };
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 const $ = id => document.getElementById(id);
 const clone = o => JSON.parse(JSON.stringify(o));
@@ -207,6 +208,9 @@ const W = 1920, Hh = 1080;
 let L = null, saved = "", temas = [], selId = null, hist = [], hi = -1, k = 1;
 
 /* ---------------- Início ---------------- */
+$("lnkVolta").href = "../?tela=" + TELA;
+$("nomeTela").textContent = "· " + (NOMES_TELA[TELA] || TELA);
+document.title = "Magnus TV · Layout · " + (NOMES_TELA[TELA] || TELA);
 (async function boot(){
   const { data:{ session } } = await sb.auth.getSession();
   if(!session){ $("vLogin").classList.remove("hidden"); return; }
