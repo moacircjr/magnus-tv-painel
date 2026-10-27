@@ -89,6 +89,9 @@
   .vlist .row span{flex:1}
   .strip img.cur{opacity:1;border-color:var(--accent)}
   .hidden{display:none!important}
+  .telas{display:flex;gap:6px;margin:0 0 10px;background:var(--soft);padding:5px;border-radius:14px;border:1px solid var(--line)}
+  .telas button{flex:1;border:0;background:transparent;padding:11px 8px;border-radius:10px}
+  .telas button.on{background:var(--card);box-shadow:0 1px 4px rgba(0,0,0,.12);color:var(--accent)}
 </style>
 </head>
 <body>
@@ -121,6 +124,9 @@
     </header>
 
 
+    <div class="telas" id="telas"></div>
+    <p class="hint" style="margin:-6px 0 16px">Link desta TV: <b id="linkTv"></b> <button class="small ghost" id="btnCopiaLink" type="button">Copiar</button></p>
+
     <section id="secLive" class="live hidden">
       <h2>Ao vivo na TV</h2>
       <div style="font-weight:600;margin-bottom:8px" id="liveTitle"></div>
@@ -146,7 +152,7 @@
     <section>
       <h2>Layout da TV</h2>
       <p style="margin:0 0 12px">Mova e redimensione os blocos (Instagram, notícias, clima, horário), escreva textos, ponha adesivos e troque o fundo para datas temáticas.</p>
-      <a href="editor/"><button class="primary" style="width:100%">✏️ Abrir editor de layout</button></a>
+      <a href="editor/" id="lnkEditor"><button class="primary" style="width:100%">✏️ Abrir editor de layout</button></a>
       <p class="hint">Melhor no computador. As mudanças aparecem na TV assim que você salvar.</p>
     </section>
 
@@ -173,7 +179,11 @@
 <script>
 const SUPABASE_URL = "https://ocqgortpqhkgxlxvphkx.supabase.co";
 const SUPABASE_KEY = "sb_publishable_q6xrUBBo9rZeoiBmKnHhPQ_RHECq_6z";
-const TELA = "principal";
+const TELAS = [ { id:"principal", nome:"Recepção" }, { id:"reuniao", nome:"Sala de reunião" } ];
+const TELA = (() => { let t = new URLSearchParams(location.search).get("tela");
+  if(!t){ try{ t = localStorage.getItem("tvTela"); }catch(e){} }
+  return TELAS.some(x => x.id === t) ? t : "principal"; })();
+try{ localStorage.setItem("tvTela", TELA); }catch(e){}
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const $ = id => document.getElementById(id);
@@ -185,6 +195,16 @@ async function boot(){
   if(session) start(session); else showLogin();
   sb.auth.onAuthStateChange((_e, s) => { if(s) start(s); });
 }
+// ---------------- Qual TV ----------------
+(function(){
+  const box = $("telas");
+  TELAS.forEach(t => { const b = document.createElement("button"); b.type = "button"; b.textContent = "📺 " + t.nome;
+    b.className = t.id === TELA ? "on" : ""; b.onclick = () => { if(t.id !== TELA) location.href = location.pathname + "?tela=" + t.id; }; box.appendChild(b); });
+  const link = location.origin + location.pathname.replace(/[^/]*$/, "") + "tv/" + (TELA === "principal" ? "" : "?tela=" + TELA);
+  $("linkTv").textContent = link.replace(/^https?:\/\//, "");
+  $("btnCopiaLink").onclick = () => { navigator.clipboard && navigator.clipboard.writeText(link); $("btnCopiaLink").textContent = "Copiado!"; };
+  $("lnkEditor").href = "editor/?tela=" + TELA;
+})();
 function showLogin(){ $("vLogin").classList.remove("hidden"); $("vApp").classList.add("hidden"); }
 let modoSenha = true;
 const lmsg = t => $("loginMsg").textContent = t;
@@ -241,7 +261,7 @@ async function start(session){
 const SPOT = SUPABASE_URL + "/functions/v1/spotify";
 async function spotifyStatus(){
   const q = new URLSearchParams(location.search).get("spotify");
-  if(q){ history.replaceState(null, "", location.pathname);
+  if(q){ history.replaceState(null, "", location.pathname + "?tela=" + TELA);
     alert({ ok:"Spotify conectado! Agora adicione o bloco 🎵 Spotify no editor de layout.", cancelado:"Conexão com o Spotify cancelada.", invalido:"O link de conexão expirou. Tente de novo.", erro:"O Spotify recusou a conexão. Confira o app no Spotify for Developers." }[q] || q); }
   try{
     const st = await fetch(SPOT + "/status").then(r => r.json());
