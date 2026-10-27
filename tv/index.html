@@ -145,7 +145,7 @@ body{background:#0b0b0b;color:var(--fg);font-family:var(--sans);overflow:hidden}
 /* ===== Ajustes ===== */
 const SUPA="https://ocqgortpqhkgxlxvphkx.supabase.co";
 const KEY="sb_publishable_q6xrUBBo9rZeoiBmKnHhPQ_RHECq_6z";
-const TELA="principal";
+const TELA=(new URLSearchParams(location.search).get("tela")||"principal").replace(/[^a-z0-9_-]/gi,"");   // ?tela=reuniao para a outra TV
 const ATUALIZA_MIN=10;     // busca posts/notícias novos a cada 10 min
 const IG_TOPO=57;          // altura do cabeçalho do embed do Instagram (corta para mostrar só a imagem)
 const REELS_LARG=380;      // largura do vídeo dentro do embed de reels
