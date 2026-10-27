@@ -113,7 +113,7 @@ body{background:#0b0b0b;color:var(--fg);font-family:var(--sans);overflow:hidden}
 
 /* ---------- modo apresentação ---------- */
 #show{position:fixed;inset:0;z-index:50;background:#0b0b0b;opacity:0;pointer-events:none;transition:opacity .6s}
-#show.on{opacity:1}
+#show.on{opacity:1;cursor:none}
 #show .sl{position:absolute;inset:0;background:#0b0b0b center/contain no-repeat;opacity:0;transition:opacity .45s}
 #show .sl.on{opacity:1}
 #show video.sl{width:100%;height:100%;object-fit:contain;background:#000}
@@ -486,7 +486,7 @@ function showSlide(){
   }else $("somHint").className="";
   pre(deck.slides.slice(n+1,n+3));box.className="on";
   $("showTitle").textContent=deck.titulo||"";$("showCount").textContent=`${n+1} / ${deck.slides.length}`;
-  $("showBar").className="on";clearTimeout(barT);barT=setTimeout(()=>$("showBar").className="",3500);
+  // sem barra de título/contador: a tela mostra só o slide
 }
 async function applyCtl(row){
   if(!row)return;const mudou=row.apresentacao_id!==ctl.apresentacao_id;ctl=row;
@@ -516,14 +516,24 @@ if(PREVIEW){
   aplicaLayout(null);
   parent.postMessage({tipo:"tv-pronta"},"*");
 }else{
-  document.addEventListener("keydown",e=>{
-    if(ctl.modo==="apresentacao"&&deck){const v=document.querySelector("#show video");if(v&&v.muted&&e.key==="Enter"){v.muted=false;$("somHint").className="";return}
-      if(e.key===" "&&v){v.paused?v.play():v.pause();return}
-      if(e.key==="ArrowRight"||e.key==="ArrowDown"||e.key==="Enter")passaSlide(1);if(e.key==="ArrowLeft"||e.key==="ArrowUp")passaSlide(-1);return}
-    if(e.key==="ArrowRight")passaPost(1);if(e.key==="ArrowLeft")passaPost(-1);
-    if(e.key==="ArrowDown")passaNot(1);if(e.key==="ArrowUp")passaNot(-1);
-    if(e.key==="f"||e.key==="F")document.documentElement.requestFullscreen?.().catch(()=>{});
-  });
+  // controle remoto / passador de slides: entende setas, OK, Page Up/Down (passadores USB) e canal +/- da Samsung
+  const PROX=["ArrowRight","ArrowDown","PageDown","MediaTrackNext","MediaFastForward","ChannelDown"],ANT=["ArrowLeft","ArrowUp","PageUp","MediaTrackPrevious","MediaRewind","ChannelUp"];
+  const PROXc=[39,40,34,428,417,10233],ANTc=[37,38,33,427,412,10232];
+  window.addEventListener("keydown",e=>{
+    const k=e.key,c=e.keyCode,prox=PROX.includes(k)||PROXc.includes(c),ant=ANT.includes(k)||ANTc.includes(c),ok=k==="Enter"||c===13;
+    if(ctl.modo==="apresentacao"&&deck){
+      if(prox||ant||ok||k===" ")e.preventDefault();
+      const v=[...document.querySelectorAll("#show video.sl")].pop();
+      if(v&&v.muted&&ok){v.muted=false;$("somHint").className="";return}
+      if((k===" "||k==="MediaPlayPause"||c===10252)&&v){v.paused?v.play():v.pause();return}
+      if(prox||ok)passaSlide(1);else if(ant)passaSlide(-1);
+      return}
+    if(k==="ArrowRight")passaPost(1);if(k==="ArrowLeft")passaPost(-1);
+    if(k==="ArrowDown")passaNot(1);if(k==="ArrowUp")passaNot(-1);
+    if(k==="f"||k==="F")document.documentElement.requestFullscreen?.().catch(()=>{});
+  },true);
+  // pede ao Tizen para entregar as teclas de mídia/canal à página (ignorado em outros navegadores)
+  try{const t=window.tizen;if(t&&t.tvinputdevice)["MediaPlayPause","MediaFastForward","MediaRewind","ChannelUp","ChannelDown"].forEach(n=>{try{t.tvinputdevice.registerKey(n)}catch(_){}})}catch(_){}
   document.addEventListener("dblclick",()=>document.documentElement.requestFullscreen?.().catch(()=>{}));
   try{const sb=supabase.createClient(SUPA,KEY);
     sb.channel("tv-"+TELA)
