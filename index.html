@@ -149,6 +149,13 @@
       <a href="editor/"><button class="primary" style="width:100%">✏️ Abrir editor de layout</button></a>
       <p class="hint">Melhor no computador. As mudanças aparecem na TV assim que você salvar.</p>
     </section>
+
+    <section>
+      <h2>Spotify da agência</h2>
+      <p id="spStatus" style="margin:0 0 12px">Verificando…</p>
+      <div class="row"><button class="primary" id="btnSpot">Conectar Spotify</button><button class="ghost hidden" id="btnSpotSair" style="flex:none">Desconectar</button></div>
+      <p class="hint">Depois de conectar, adicione o bloco "🎵 Spotify" no editor de layout para mostrar na TV a música que está tocando.</p>
+    </section>
   </div>
 </div>
 
@@ -228,8 +235,37 @@ async function start(session){
   if(iniciado) return; iniciado = true;
   $("vLogin").classList.add("hidden"); $("vApp").classList.remove("hidden");
   $("whoEmail").textContent = session.user.email;
-  startLive();
+  startLive(); spotifyStatus();
 }
+// ---------------- Spotify ----------------
+const SPOT = SUPABASE_URL + "/functions/v1/spotify";
+async function spotifyStatus(){
+  const q = new URLSearchParams(location.search).get("spotify");
+  if(q){ history.replaceState(null, "", location.pathname);
+    alert({ ok:"Spotify conectado! Agora adicione o bloco 🎵 Spotify no editor de layout.", cancelado:"Conexão com o Spotify cancelada.", invalido:"O link de conexão expirou. Tente de novo.", erro:"O Spotify recusou a conexão. Confira o app no Spotify for Developers." }[q] || q); }
+  try{
+    const st = await fetch(SPOT + "/status").then(r => r.json());
+    $("btnSpotSair").classList.toggle("hidden", !st.conectado);
+    $("btnSpot").textContent = st.conectado ? "Trocar conta" : "Conectar Spotify";
+    $("spStatus").innerHTML = !st.configurado ? "Falta configurar o app do Spotify no Supabase (Client ID e Secret)."
+      : st.conectado ? "✅ Conectado" + (st.conta ? " à conta <b>" + esc(st.conta) + "</b>" : "") + "." : "Nenhuma conta conectada ainda.";
+  }catch(e){ $("spStatus").textContent = "Não consegui verificar agora."; }
+}
+async function spotifyChama(rota){
+  const { data:{ session } } = await sb.auth.getSession();
+  const r = await fetch(SPOT + "/" + rota, { method:"POST", headers:{ Authorization:"Bearer " + session.access_token, apikey:SUPABASE_KEY } });
+  return r.json();
+}
+$("btnSpot").onclick = async () => {
+  $("btnSpot").disabled = true;
+  try{ const j = await spotifyChama("login"); if(j.url) location.href = j.url; else alert(j.erro || "Erro"); }
+  catch(e){ alert("Erro: " + e.message); }
+  $("btnSpot").disabled = false;
+};
+$("btnSpotSair").onclick = async () => {
+  if(!confirm("Desconectar o Spotify da TV?")) return;
+  await spotifyChama("desconectar"); spotifyStatus();
+};
 
 function render(){}
 function touch(){}
