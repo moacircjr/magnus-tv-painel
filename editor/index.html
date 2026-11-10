@@ -133,6 +133,7 @@ header .sp{flex:1}
         <button data-add="logo">✳️ Logo</button>
         <button data-add="imagem">🖼️ Imagem</button>
         <button data-add="spotify">🎵 Spotify</button>
+        <button data-add="contagem">⏳ Contagem regressiva</button>
       </div>
       <p class="hint">Imagem serve para adesivos, selos e enfeites temáticos (PNG com fundo transparente fica ótimo).</p>
     </div>
@@ -200,8 +201,8 @@ const PADRAO={v:1,
     {id:"instagram",tipo:"instagram",x:1010,y:56,w:850,h:500,tempo:30},
     {id:"noticias",tipo:"noticias",x:1010,y:580,w:850,h:456,tempo:40}
   ]};
-const NOME = { spotify:"Spotify · tocando agora", instagram:"Instagram", noticias:"Notícias", clima:"Clima", hora:"Horário", texto:"Texto", imagem:"Imagem" };
-const ICONE = { spotify:"🎵", instagram:"📷", noticias:"📰", clima:"⛅", hora:"🕒", texto:"🔤", imagem:"🖼️" };
+const NOME = { contagem:"Contagem regressiva", spotify:"Spotify · tocando agora", instagram:"Instagram", noticias:"Notícias", clima:"Clima", hora:"Horário", texto:"Texto", imagem:"Imagem" };
+const ICONE = { contagem:"⏳", spotify:"🎵", instagram:"📷", noticias:"📰", clima:"⛅", hora:"🕒", texto:"🔤", imagem:"🖼️" };
 const UNICOS = ["instagram","noticias","clima","hora","spotify"];
 const W = 1920, Hh = 1080;
 
@@ -396,6 +397,7 @@ function adiciona(t){
   const base = {
     instagram:{ w:850, h:500, tempo:30 }, noticias:{ w:850, h:456, tempo:40 },
     spotify:{ w:680, h:160, esconder:true },
+    contagem:{ w:680, h:108, data:new Date().getFullYear() + "-12-25", titulo:"para o Natal", emoji:"🎄", mensagem:"Feliz Natal! 🎄", anual:true },
     clima:{ w:680, h:108, cidade:{ nome:"São Ludgero", lat:-28.33, lon:-49.18 } }, hora:{ w:680, h:108 },
     texto:{ w:900, h:130, texto:"Seu *texto* aqui", fonte:"cond", cor:"#f1ede8", alinhar:"center", vidro:false },
     logo:{ w:560, h:130, texto:"magnus*.*", fonte:"logo", cor:"#f1ede8", alinhar:"left", vidro:false }
@@ -438,9 +440,9 @@ function campos(b){
 function inspetor(){
   const box = $("insp"), b = sel();
   if(!b){ box.innerHTML = `<div class="card"><h3>Editar</h3><div class="empty">Clique num bloco da tela para editar.<br><br>Dica: duplo clique num texto vai direto para a edição.</div></div>`; return; }
-  const glassDef = ["instagram","noticias","clima","hora","spotify"].includes(b.tipo);
+  const glassDef = ["instagram","noticias","clima","hora","spotify","contagem"].includes(b.tipo);
   const vidroOn = b.vidro ?? glassDef;
-  const raioDef = ["clima","hora"].includes(b.tipo) ? Math.round(b.h / 2) : b.tipo === "texto" ? (vidroOn ? Math.min(40, Math.round(b.h/2)) : 0) : b.tipo === "imagem" ? (vidroOn ? 40 : 0) : 40;
+  const raioDef = ["clima","hora"].includes(b.tipo) || (b.tipo === "contagem" && b.w >= b.h * 1.3) ? Math.round(b.h / 2) : b.tipo === "texto" ? (vidroOn ? Math.min(40, Math.round(b.h/2)) : 0) : b.tipo === "imagem" ? (vidroOn ? 40 : 0) : 40;
   let h = `<div class="card"><h3>${ICONE[b.tipo] || ""} ${esc(b.tipo === "texto" && b.fonte === "logo" ? "Logo" : NOME[b.tipo])}</h3>
     <div class="grid2">
       <div><label for="i_x">X</label><input type="number" id="i_x" value="${b.x}"></div>
@@ -488,6 +490,16 @@ function inspetor(){
     h += `<div class="card"><h3>Spotify</h3>
       <label class="chk"><input type="checkbox" id="iEsc" ${b.esconder === false ? "" : "checked"}> Esconder quando nada estiver tocando</label>
       <p class="hint">Mostra a capa, a música e o artista do Spotify da agência. A conta é conectada no painel, em "Spotify da agência". Se o bloco ficar mais alto que largo, a capa vai para cima.</p></div>`;
+  }
+  if(b.tipo === "contagem"){
+    h += `<div class="card"><h3>Contagem regressiva</h3>
+      <label>Data</label><input type="date" id="cData" value="${esc(b.data || "")}">
+      <label class="chk"><input type="checkbox" id="cAnual" ${b.anual === false ? "" : "checked"}> Repetir todo ano</label>
+      <label>Texto depois do número</label><input type="text" id="cTit" value="${esc(b.titulo ?? "para o Natal")}">
+      <label>Emoji</label><input type="text" id="cEmo" value="${esc(b.emoji ?? "🎄")}" placeholder="deixe vazio para não mostrar">
+      <label>Mensagem no dia</label><input type="text" id="cMsg" value="${esc(b.mensagem || "Feliz Natal!")}">
+      <label class="chk"><input type="checkbox" id="cHor" ${b.horas ? "checked" : ""}> Mostrar horas, minutos e segundos</label>
+      <p class="hint">Conta pelos dias no horário de Brasília. Dá para ter várias (Natal, Ano Novo, aniversário da agência…). Se o bloco ficar mais alto que largo, o conteúdo empilha.</p></div>`;
   }
   if(b.tipo === "hora"){
     h += `<div class="card"><h3>Horário</h3><label class="chk"><input type="checkbox" id="iData" ${b.data === false ? "" : "checked"}> Mostrar dia da semana e data</label>
@@ -558,6 +570,12 @@ function inspetor(){
   }
   if(b.tipo === "spotify") liga("iEsc", t => b.esconder = t.checked, "onchange");
   if(b.tipo === "hora") liga("iData", t => b.data = t.checked, "onchange");
+  if(b.tipo === "contagem"){
+    liga("cData", t => { if(t.value) b.data = t.value; }, "onchange");
+    liga("cAnual", t => b.anual = t.checked, "onchange");
+    liga("cTit", t => b.titulo = t.value); liga("cEmo", t => b.emoji = t.value.trim()); liga("cMsg", t => b.mensagem = t.value);
+    liga("cHor", t => b.horas = t.checked, "onchange");
+  }
   if(b.tipo === "instagram" || b.tipo === "noticias"){
     liga("iTempo", t => b.tempo = Math.max(5, +t.value || 30));
     liga("iSetas", t => b.setas = t.checked, "onchange");
