@@ -110,7 +110,7 @@ body{background:#0b0b0b;color:var(--fg);font-family:var(--sans);overflow:hidden}
 @keyframes eq{0%,100%{height:25%}50%{height:100%}}
 .spo.pausa .eq i{animation:none;height:25%}
 .ctg{display:flex;align-items:center;justify-content:center;white-space:nowrap;overflow:hidden}
-.ctg .ico{font-size:2.6em;line-height:1;flex:none}
+.ctg .emo{font-size:2.6em;line-height:1;flex:none}
 .ctg .n{font:400 3.5em/1 var(--cond);letter-spacing:.01em;font-variant-numeric:tabular-nums;flex:none}
 .ctg .d{display:flex;flex-direction:column;line-height:1.3;color:var(--soft);min-width:0}
 .ctg .d b{font:italic 1.6em/1.1 var(--serif);color:var(--or);font-weight:400}
@@ -204,7 +204,7 @@ const TPL={
   hora:`<div class="box pil hor"><span class="h" id="hora">--:--</span><span class="d"><b id="dia"></b><span id="data"></span></span></div>`,
   texto:`<div class="box"><div class="txt"><span class="in"></span></div></div>`,
   imagem:`<div class="box"><img class="img" alt=""></div>`,
-  contagem:`<div class="box ctg"><span class="ico"></span><span class="n">--</span><span class="d"><b class="u"></b><span class="tt"></span></span></div>`,
+  contagem:`<div class="box ctg"><span class="emo"></span><span class="n">--</span><span class="d"><b class="u"></b><span class="tt"></span></span></div>`,
   spotify:`<div class="box spo vazio"><div class="capa"><img id="spCapa" alt=""></div><div class="info">
     <span class="k"><span class="eq"><i></i><i></i><i></i><i></i></span><span id="spK">Tocando agora</span></span>
     <span class="t" id="spT"></span><span class="a" id="spA"></span><div class="bar"><i id="spBar"></i></div></div></div>`
@@ -343,7 +343,7 @@ function calcContagem(b){
 function pintaContagem(el,b){
   const box=el.querySelector(".ctg");if(!box)return;const c=calcContagem(b);
   box.classList.toggle("festa",!!c.festa);
-  const n=box.querySelector(".n"),u=box.querySelector(".u"),tt=box.querySelector(".tt"),ic=box.querySelector(".ico");
+  const n=box.querySelector(".n"),u=box.querySelector(".u"),tt=box.querySelector(".tt"),ic=box.querySelector(".emo");
   const ico=b.emoji==null?"🎄":b.emoji;
   if(ic.textContent!==ico)ic.textContent=ico;ic.classList.toggle("hidden",!ico);
   const nv=c.festa?"":String(c.dias),uv=c.festa?(b.mensagem||"Feliz Natal!"):c.u,tv=c.festa?"":(b.titulo==null?"para o Natal":b.titulo);
