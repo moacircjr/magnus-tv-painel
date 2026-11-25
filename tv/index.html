@@ -51,6 +51,15 @@ body{background:#0b0b0b;color:var(--fg);font-family:var(--sans);overflow:hidden}
 .pil .d{margin-left:auto;text-align:right;display:flex;flex-direction:column;font-size:1em;line-height:1.3;color:var(--soft);min-width:0}
 .pil .d b{font:italic 1.6em/1.1 var(--serif);color:var(--or);font-weight:400}
 .hor{justify-content:space-between}
+/* botão que abre outro endereço (ex.: o painel do time do App Magnus) */
+.lnk{display:flex;align-items:center;gap:.9em;color:var(--fg);text-decoration:none;white-space:nowrap;cursor:pointer;transition:transform .2s,box-shadow .2s}
+.lnk .emo{font-size:2.6em;line-height:1;flex:none}
+.lnk .d{display:flex;flex-direction:column;min-width:0;line-height:1.2}
+.lnk .tt{font:400 2.3em/1.05 var(--cond);letter-spacing:.01em;overflow:hidden;text-overflow:ellipsis}
+.lnk .ss{font:italic 1.25em/1.3 var(--serif);color:var(--or);overflow:hidden;text-overflow:ellipsis}
+.lnk .seta{margin-left:auto;flex:none;width:2.6em;height:2.6em;border-radius:50%;display:grid;place-items:center;background:var(--or);color:#fff}
+.lnk .seta svg{width:1.3em;height:1.3em;stroke:#fff}
+.lnk:hover,.lnk:focus-visible{transform:scale(1.03);outline:none;box-shadow:0 0 0 4px rgba(238,90,44,.75),0 30px 80px rgba(0,0,0,.45)}
 .hor .d b{text-transform:capitalize}
 
 /* instagram e notícias */
@@ -204,6 +213,7 @@ const TPL={
   hora:`<div class="box pil hor"><span class="h" id="hora">--:--</span><span class="d"><b id="dia"></b><span id="data"></span></span></div>`,
   texto:`<div class="box"><div class="txt"><span class="in"></span></div></div>`,
   imagem:`<div class="box"><img class="img" alt=""></div>`,
+  botao:`<a class="box lnk" href="#"><span class="emo"></span><span class="d"><b class="tt"></b><span class="ss"></span></span><span class="seta">${SETA_D}</span></a>`,
   contagem:`<div class="box ctg"><span class="emo"></span><span class="n">--</span><span class="d"><b class="u"></b><span class="tt"></span></span></div>`,
   spotify:`<div class="box spo vazio"><div class="capa"><img id="spCapa" alt=""></div><div class="info">
     <span class="k"><span class="eq"><i></i><i></i><i></i><i></i></span><span id="spK">Tocando agora</span></span>
@@ -266,6 +276,24 @@ function posiciona(el,b){
   else if(b.tipo==="imagem")imagem(el,box,b);
   else if(b.tipo==="spotify")spotifyBloco(el,box,b);
   else if(b.tipo==="contagem")contagemBloco(el,box,b);
+  else if(b.tipo==="botao")botaoBloco(el,box,b);
+}
+/* botão: abre o endereço e manda junto ?volta=<esta tela>, para a outra página ter o botão de voltar */
+function destinoBotao(b){
+  const u=String(b.url||"").trim();if(!/^https?:\/\//i.test(u))return "#";
+  if(b.volta===false)return u;
+  return u+(u.includes("?")?"&":"?")+"volta="+encodeURIComponent(location.href);
+}
+function botaoBloco(el,box,b){
+  const s=b.h/108;el.style.fontSize=20*s+"px";
+  vidro(box,b,b.h/2,true);
+  box.style.padding=`0 ${22*s}px 0 ${36*s}px`;
+  const emo=box.querySelector(".emo");emo.textContent=b.emoji||"";emo.style.display=b.emoji?"":"none";
+  box.querySelector(".tt").textContent=b.texto||"Abrir";
+  const ss=box.querySelector(".ss");ss.textContent=b.sub||"";ss.style.display=b.sub?"":"none";
+  box.querySelector(".seta").style.display=b.w<b.h*2.2?"none":"";
+  box.setAttribute("href",PREVIEW?"#":destinoBotao(b));
+  box.setAttribute("aria-label",(b.texto||"Abrir")+(b.sub?": "+b.sub:""));
 }
 
 function painel(el,box,b){
@@ -573,6 +601,7 @@ if(PREVIEW){
       if((k===" "||k==="MediaPlayPause"||c===10252)&&v){v.paused?v.play():v.pause();return}
       if(prox||ok)passaSlide(1);else if(ant)passaSlide(-1);
       return}
+    if(ok){const bs=(L?L.blocos:[]).filter(b=>b.tipo==="botao"&&!b.oculto&&destinoBotao(b)!=="#");if(bs.length===1){e.preventDefault();location.href=destinoBotao(bs[0]);return}}
     if(k==="ArrowRight")passaPost(1);if(k==="ArrowLeft")passaPost(-1);
     if(k==="ArrowDown")passaNot(1);if(k==="ArrowUp")passaNot(-1);
     if(k==="f"||k==="F")document.documentElement.requestFullscreen?.().catch(()=>{});

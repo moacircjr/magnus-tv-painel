@@ -134,6 +134,7 @@ header .sp{flex:1}
         <button data-add="imagem">🖼️ Imagem</button>
         <button data-add="spotify">🎵 Spotify</button>
         <button data-add="contagem">⏳ Contagem regressiva</button>
+        <button data-add="botao">🔗 Botão (link)</button>
       </div>
       <p class="hint">Imagem serve para adesivos, selos e enfeites temáticos (PNG com fundo transparente fica ótimo).</p>
     </div>
@@ -201,8 +202,8 @@ const PADRAO={v:1,
     {id:"instagram",tipo:"instagram",x:1010,y:56,w:850,h:500,tempo:30},
     {id:"noticias",tipo:"noticias",x:1010,y:580,w:850,h:456,tempo:40}
   ]};
-const NOME = { contagem:"Contagem regressiva", spotify:"Spotify · tocando agora", instagram:"Instagram", noticias:"Notícias", clima:"Clima", hora:"Horário", texto:"Texto", imagem:"Imagem" };
-const ICONE = { contagem:"⏳", spotify:"🎵", instagram:"📷", noticias:"📰", clima:"⛅", hora:"🕒", texto:"🔤", imagem:"🖼️" };
+const NOME = { botao:"Botão", contagem:"Contagem regressiva", spotify:"Spotify · tocando agora", instagram:"Instagram", noticias:"Notícias", clima:"Clima", hora:"Horário", texto:"Texto", imagem:"Imagem" };
+const ICONE = { botao:"🔗", contagem:"⏳", spotify:"🎵", instagram:"📷", noticias:"📰", clima:"⛅", hora:"🕒", texto:"🔤", imagem:"🖼️" };
 const UNICOS = ["instagram","noticias","clima","hora","spotify"];
 const W = 1920, Hh = 1080;
 
@@ -275,7 +276,7 @@ $("bDesc").onclick = async () => {
 addEventListener("beforeunload", e => { if(L && JSON.stringify(L) !== saved){ e.preventDefault(); e.returnValue = ""; } });
 
 /* ---------------- Sobreposição (arrastar / redimensionar) ---------------- */
-function rotulo(b){ return b.tipo === "texto" ? (b.fonte === "logo" ? "Logo" : "Texto") + ": " + (b.texto || "").replace(/\*/g, "").split("\n")[0].slice(0, 28) : NOME[b.tipo] || b.tipo; }
+function rotulo(b){ if(b.tipo === "botao") return "Botão: " + (b.texto || "").slice(0, 28); return b.tipo === "texto" ? (b.fonte === "logo" ? "Logo" : "Texto") + ": " + (b.texto || "").replace(/\*/g, "").split("\n")[0].slice(0, 28) : NOME[b.tipo] || b.tipo; }
 function desenha(){
   const ov = $("ov"); ov.innerHTML = "";
   L.blocos.forEach((b, i) => {
@@ -397,6 +398,7 @@ function adiciona(t){
   const base = {
     instagram:{ w:850, h:500, tempo:30 }, noticias:{ w:850, h:456, tempo:40 },
     spotify:{ w:680, h:160, esconder:true },
+    botao:{ w:680, h:108, emoji:"📊", texto:"Painel do time", sub:"o que o time está fazendo", url:"", volta:true },
     contagem:{ w:680, h:108, data:new Date().getFullYear() + "-12-25", titulo:"para o Natal", emoji:"🎄", mensagem:"Feliz Natal! 🎄", anual:true },
     clima:{ w:680, h:108, cidade:{ nome:"São Ludgero", lat:-28.33, lon:-49.18 } }, hora:{ w:680, h:108 },
     texto:{ w:900, h:130, texto:"Seu *texto* aqui", fonte:"cond", cor:"#f1ede8", alinhar:"center", vidro:false },
@@ -440,7 +442,7 @@ function campos(b){
 function inspetor(){
   const box = $("insp"), b = sel();
   if(!b){ box.innerHTML = `<div class="card"><h3>Editar</h3><div class="empty">Clique num bloco da tela para editar.<br><br>Dica: duplo clique num texto vai direto para a edição.</div></div>`; return; }
-  const glassDef = ["instagram","noticias","clima","hora","spotify","contagem"].includes(b.tipo);
+  const glassDef = ["instagram","noticias","clima","hora","spotify","contagem","botao"].includes(b.tipo);
   const vidroOn = b.vidro ?? glassDef;
   const raioDef = ["clima","hora"].includes(b.tipo) || (b.tipo === "contagem" && b.w >= b.h * 1.3) ? Math.round(b.h / 2) : b.tipo === "texto" ? (vidroOn ? Math.min(40, Math.round(b.h/2)) : 0) : b.tipo === "imagem" ? (vidroOn ? 40 : 0) : 40;
   let h = `<div class="card"><h3>${ICONE[b.tipo] || ""} ${esc(b.tipo === "texto" && b.fonte === "logo" ? "Logo" : NOME[b.tipo])}</h3>
@@ -500,6 +502,16 @@ function inspetor(){
       <label>Mensagem no dia</label><input type="text" id="cMsg" value="${esc(b.mensagem || "Feliz Natal!")}">
       <label class="chk"><input type="checkbox" id="cHor" ${b.horas ? "checked" : ""}> Mostrar horas, minutos e segundos</label>
       <p class="hint">Conta pelos dias no horário de Brasília. Dá para ter várias (Natal, Ano Novo, aniversário da agência…). Se o bloco ficar mais alto que largo, o conteúdo empilha.</p></div>`;
+  }
+  if(b.tipo === "botao"){
+    h += `<div class="card"><h3>Botão</h3>
+      <label>Texto</label><input type="text" id="bTxt" value="${esc(b.texto || "")}">
+      <label>Linha de baixo</label><input type="text" id="bSub" value="${esc(b.sub || "")}" placeholder="deixe vazio para não mostrar">
+      <label>Emoji</label><input type="text" id="bEmo" value="${esc(b.emoji || "")}" placeholder="deixe vazio para não mostrar">
+      <label>Endereço (link)</label><input type="url" id="bUrl" value="${esc(b.url || "")}" placeholder="https://app.agenciamagnus.com.br/tv?k=…">
+      <p class="hint" id="bUrlM">${b.url && !/^https?:\/\//i.test(b.url) ? "O link precisa começar com https://" : ""}</p>
+      <label class="chk"><input type="checkbox" id="bVol" ${b.volta === false ? "" : "checked"}> A outra página ganha um botão para voltar para esta tela</label>
+      <p class="hint">Na TV, clique no botão com o controle (ou aperte OK, se ele for o único botão da tela). Para o painel do time da Magnus, copie o link em Gestão → Painel da TV, no sistema, e cole aqui.</p></div>`;
   }
   if(b.tipo === "hora"){
     h += `<div class="card"><h3>Horário</h3><label class="chk"><input type="checkbox" id="iData" ${b.data === false ? "" : "checked"}> Mostrar dia da semana e data</label>
@@ -569,6 +581,12 @@ function inspetor(){
     };
   }
   if(b.tipo === "spotify") liga("iEsc", t => b.esconder = t.checked, "onchange");
+  if(b.tipo === "botao"){
+    liga("bTxt", t => { b.texto = t.value; const tg = $("ov").querySelector(`[data-id="${b.id}"] .tag`); if(tg) tg.textContent = rotulo(b); });
+    liga("bSub", t => b.sub = t.value); liga("bEmo", t => b.emoji = t.value.trim());
+    liga("bUrl", t => { b.url = t.value.trim(); $("bUrlM").textContent = b.url && !/^https?:\/\//i.test(b.url) ? "O link precisa começar com https://" : ""; });
+    liga("bVol", t => b.volta = t.checked, "onchange");
+  }
   if(b.tipo === "hora") liga("iData", t => b.data = t.checked, "onchange");
   if(b.tipo === "contagem"){
     liga("cData", t => { if(t.value) b.data = t.value; }, "onchange");
